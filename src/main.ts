@@ -1,8 +1,4 @@
 
-//
-//
-//
-
 window.onload = function(){
 
     function onMIDIFailure(e: Event) {
