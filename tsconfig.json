@@ -11,6 +11,7 @@
         "sourceMap": true
     },
     "files": [
+        "./src/midi.ts",
         "./src/main.ts"
     ]
 }
