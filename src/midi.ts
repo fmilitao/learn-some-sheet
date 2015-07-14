@@ -46,17 +46,11 @@ module MIDIListener {
             const data: Uint8Array = message.data; // this gives us our [command/channel, note, velocity] data.
             const [command,note,velocity] = <Array<number>><any>data; //FIXME: typescript bug?
             
-            console.log('MIDI data', data); // MIDI data [144, 63, 73]
-
             // channel agnostic command type see [3]
-            switch( command & 0xf0 ){
-                case 144: // note on
-                    onKey(true, note);
-                    break;
-                case 128: // note off
-                    onKey(false, note);
-                    break;
-                // default ignores event
+            if( (command & 0xf0) === 144 ){
+                console.log('MIDI data', data); // MIDI data [144, 63, 73]
+                // key is pressed if velocity is not zero.
+                onKey(velocity!==0, note);
             }
         };
 
@@ -72,7 +66,7 @@ module MIDIListener {
     export function convertMIDIcodeToNote(code : number): [string,number]{
         // See [5,7]. Mo pretty way to do this convertion.
         // returns [code, octave] where octave starts at -1.
-        return [NOTES[code % NOTES.length], (code / NOTES.length) - 1];
+        return [NOTES[code % NOTES.length], Math.floor((code / NOTES.length) - 1)];
     };
 
 };
