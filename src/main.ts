@@ -1,12 +1,15 @@
 /// <reference path="../lib/webmidi.d.ts" />
 
 /*
-    reading list / useful references
+    References:
 
-    https://news.ycombinator.com/item?id=9844219
-    http://subsynth.sourceforge.net/midinote2freq.html
-    http://www.keithmcmillen.com/blog/making-music-in-the-browser-web-midi-api/
-    http://newt.phys.unsw.edu.au/jw/notes.html
+    [1] https://news.ycombinator.com/item?id=9844219
+    [2] http://subsynth.sourceforge.net/midinote2freq.html
+    [3] http://www.keithmcmillen.com/blog/making-music-in-the-browser-web-midi-api/
+    [4] http://newt.phys.unsw.edu.au/jw/notes.html
+    [5] http://stackoverflow.com/questions/712679/convert-midi-note-numbers-to-name-and-octave
+    [6] https://itp.nyu.edu/archive/physcomp-spring2014/Tutorials/MusicalArduino
+    [7] https://itp.nyu.edu/archive/physcomp-spring2014/uploads/midi/midi_screen5.png (MIDI code table)
 */
 
 module MIDIListener {
@@ -41,14 +44,20 @@ module MIDIListener {
 
         function onMIDIMessage(message: WebMidi.MIDIMessageEvent) {
             let data: Uint8Array = message.data; // this gives us our [command/channel, note, velocity] data.
-            let [channel,note,velocity] = <Array<number>><any>data; //FIXME: typescript bug?
+            let [command,note,velocity] = <Array<number>><any>data; //FIXME: typescript bug?
+            
             console.log('MIDI data', data); // MIDI data [144, 63, 73]
 
-            // FIXME: key press?
-            // noteOn == 144
-            // noteOff == 128
-            // else ignore?
-            onKey(true,note);
+            // channel agnostic command type see [3]
+            switch( command & 0xf0 ){
+                case 144: // note on
+                    onKey(true, note);
+                    break;
+                case 128: // note off
+                    onKey(false, note);
+                    break;
+                // default ignores event
+            }
         };
 
         // function onMIDIFailure(e: Event) {
@@ -66,16 +75,8 @@ module MIDIListener {
      * @returns [note : string, octave : number]
      */
     export function convertMIDIcodeToNote(code : number): [string,number]{
-        /*
-            See:
-            http://stackoverflow.com/questions/712679/convert-midi-note-numbers-to-name-and-octave
-            https://itp.nyu.edu/archive/physcomp-spring2014/Tutorials/MusicalArduino
-            https://itp.nyu.edu/archive/physcomp-spring2014/uploads/midi/midi_screen5.png (MIDI code table)
-            ( no pretty way to do this convertion )
-        */
-
-        // returns [code, octave]
-        // note that octave starts at -1.
+        // See [5,7]. Mo pretty way to do this convertion.
+        // returns [code, octave] where octave starts at -1.
         return [NOTES[code % NOTES.length], (code / NOTES.length) - 1];
     };
 
