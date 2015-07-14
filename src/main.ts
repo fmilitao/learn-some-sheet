@@ -26,15 +26,15 @@ module MIDIListener {
         if (navigator.requestMIDIAccess) {
             navigator.requestMIDIAccess({ sysex: false }).then(onMIDISuccess, onMIDIFailure);
         } else {
-            return false; // alert("No MIDI support in your browser.");
+            return false;
         }
 
         // midi functions
         function onMIDISuccess(midiAccess: WebMidi.MIDIAccess) {
             // when we get a succesful response, run this code
-            let midi: WebMidi.MIDIAccess = midiAccess; // this is our raw MIDI data, inputs, outputs, and sysex status
+            const midi: WebMidi.MIDIAccess = midiAccess; // this is our raw MIDI data, inputs, outputs, and sysex status
 
-            let inputs = midi.inputs.values();
+            const inputs = midi.inputs.values();
             // loop over all available inputs and listen for any MIDI input
             for (let input = inputs.next(); input && !input.done; input = inputs.next()) {
                 // each time there is a midi message call the onMIDIMessage function
@@ -43,8 +43,8 @@ module MIDIListener {
         };
 
         function onMIDIMessage(message: WebMidi.MIDIMessageEvent) {
-            let data: Uint8Array = message.data; // this gives us our [command/channel, note, velocity] data.
-            let [command,note,velocity] = <Array<number>><any>data; //FIXME: typescript bug?
+            const data: Uint8Array = message.data; // this gives us our [command/channel, note, velocity] data.
+            const [command,note,velocity] = <Array<number>><any>data; //FIXME: typescript bug?
             
             console.log('MIDI data', data); // MIDI data [144, 63, 73]
 
@@ -60,11 +60,6 @@ module MIDIListener {
             }
         };
 
-        // function onMIDIFailure(e: Event) {
-        //     // when we get a failed response, run this code
-        //     console.log("No access to MIDI devices or your browser doesn't support WebMIDI API. Please use WebMIDIAPIShim " + e);
-        // };
-
         return true;
     };
 
@@ -79,5 +74,26 @@ module MIDIListener {
         // returns [code, octave] where octave starts at -1.
         return [NOTES[code % NOTES.length], (code / NOTES.length) - 1];
     };
+
+};
+
+//
+//
+//
+
+window.onload = function(){
+
+    function onMIDIFailure(e: Event) {
+        console.log('No access to MIDI devices or your browser does not support WebMIDI API.');
+    };
+
+    function onKey(down: boolean, note: number) {
+        console.log('Key: ' + note + ' ' + down);
+        console.log(MIDIListener.convertMIDIcodeToNote(note));
+    };
+
+    if (!MIDIListener.init(onMIDIFailure, onKey)) {
+        alert("No MIDI support in your browser.");
+    }
 
 };
