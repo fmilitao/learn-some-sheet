@@ -6,6 +6,9 @@
     https://news.ycombinator.com/item?id=9844219
     http://subsynth.sourceforge.net/midinote2freq.html
     http://www.keithmcmillen.com/blog/making-music-in-the-browser-web-midi-api/
+    http://newt.phys.unsw.edu.au/jw/notes.html
+    http://stackoverflow.com/questions/712679/convert-midi-note-numbers-to-name-and-octave
+    https://itp.nyu.edu/archive/physcomp-spring2014/Tutorials/MusicalArduino
 */
 
 module MIDIListener {
