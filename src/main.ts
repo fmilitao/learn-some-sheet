@@ -20,11 +20,11 @@ module MIDIListener {
             onMIDIFailure: (e: Event) => void,
             // event handler for a note press/release
             onKey: (down: boolean, note: number) => void
-        ) : boolean
-        {
+        ) : boolean {
+        
         // request MIDI access
         if (navigator.requestMIDIAccess) {
-            navigator.requestMIDIAccess({ sysex: false }).then(onMIDISuccess, onMIDIFailure);
+            navigator.requestMIDIAccess({ sysex: true }).then(onMIDISuccess, onMIDIFailure);
         } else {
             return false;
         }
@@ -93,7 +93,9 @@ window.onload = function(){
     };
 
     if (!MIDIListener.init(onMIDIFailure, onKey)) {
-        alert("No MIDI support in your browser.");
+        alert('No MIDI support in your browser.');
     }
+
+    console.log('ready');
 
 };
