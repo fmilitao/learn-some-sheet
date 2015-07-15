@@ -1,4 +1,36 @@
 
+
+module Game {
+
+    function randomNote(){
+        // charCode('a') = 97
+        // 'a'..'g' 7 numbers
+        // Math.floor avoids 'h' (97+7)
+        return String.fromCharCode(97 + Math.floor(Math.random() * 7));
+    };
+
+    function randomOctave(min:number,max:number){
+        return min + Math.round(Math.random() * (max-min));
+    };
+
+    export function makeRandomNotes(n:number){
+
+        const r: string[] = [];
+
+        while (r.length < Sheet.NUM_BEATS) {
+            const note = randomNote();
+            const octave = randomOctave(4,5);
+            r.push(note+"/"+octave);
+
+            console.log(note + "/" + octave);
+        }
+
+        return r;
+    };
+
+};
+
+
 window.onload = function(){
 
     function onMIDIFailure(e: Event) {
@@ -16,10 +48,12 @@ window.onload = function(){
 
     console.log('ready');
 
+
     Sheet.init();
 
     Sheet.draw(
-        Sheet.buildNotes("c/4", "d/4", "b/4", "c/4", "e/4", "g/4", "f/3", "e/4"),
+        Sheet.buildNotes( Game.makeRandomNotes(8) ),
+        //Sheet.buildNotes(r), //"c/4", "d/4", "b/4", "c/4", "e/4", "g/4", "f/3", "e/4"),
         
         // test correct notes
         Sheet.buildKeyStatus(1, "green","c/3","e/3"),

@@ -12,8 +12,12 @@ declare var Vex: any; // FIXME: hack until proper 'vexflow.d.ts' is available.
 
 module Sheet {
 
+    export
     const WIDTH = 500, HEIGHT = 700;
+
+    export
     const NUM_BEATS = 8, BEAT_VALUE = 4;
+
     const formatter = new Vex.Flow.Formatter();
 
     let ctx: any = null;
@@ -35,7 +39,7 @@ module Sheet {
     };
 
     /** Builds a formatted voice for the supplied quarter notes. All styled in black. */
-    export function buildNotes(...ns : string[]){
+    export function buildNotes(ns : string[]){
         if (ns.length !== NUM_BEATS)
             throw ('Invalid number of notes. Expecting '+NUM_BEATS+' but got '+ns.length+'.');
 
@@ -59,6 +63,10 @@ module Sheet {
 
         return voice;
     };
+
+    export function buildNotesList(...ns: string[]) {
+        return buildNotes(ns);
+    }
 
     /** Builds formatted voice where only position 'pos' is non-transparent and shows
         'ns' notes with the specified color. */
