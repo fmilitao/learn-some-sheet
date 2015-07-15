@@ -8,28 +8,71 @@
  TODO: grand staff
  */
 
-declare var Vex: any; // FIXME: hack until proper vexflow.d.ts is ready.
+declare var Vex: any; // FIXME: hack until proper 'vexflow.d.ts' is available.
 
 module Sheet {
 
+    const WIDTH = 500, HEIGHT = 700;
+    const NUM_BEATS = 8, BEAT_VALUE = 4;
+    const formatter = new Vex.Flow.Formatter();
+
+    let ctx: any = null;
+    let stave: any = null;
+
     export function init() {
 
-        var canvas = document.getElementsByTagName('canvas')[0];
+        const canvas = document.getElementsByTagName('canvas')[0];
+        const renderer = new Vex.Flow.Renderer(canvas, Vex.Flow.Renderer.Backends.CANVAS);
+        renderer.resize(HEIGHT, WIDTH);
 
-        var renderer = new Vex.Flow.Renderer(canvas, Vex.Flow.Renderer.Backends.CANVAS);
-        //renderer.resize(1500, 600);
-        var ctx = renderer.getContext();
+        ctx = renderer.getContext();
         //ctx.scale(2, 2);
-        var stave = new Vex.Flow.Stave(10, 100, 500); // x-padding, y-padding, width
+
+        stave = new Vex.Flow.Stave(10, 100, WIDTH); // x-padding, y-padding, width
         stave.addClef('treble');
-        stave.setContext(ctx).draw();
+        stave.setContext(ctx);
+
+    };
+
+    export function buildFormattedVoiceForQuarterNotes(...ns : string[]){
+        if (ns.length !== NUM_BEATS)
+            throw ('Invalid number of notes. Expecting '+NUM_BEATS+' but got '+ns.length+'.');
+
+        const notes : any[] = [];
+
+        for(const note of ns ){
+            // only one note, no chords
+            notes.push(new Vex.Flow.StaveNote({ keys: [note], duration: 'q' }))
+        }
+
+        const voice = new Vex.Flow.Voice({
+            num_beats: NUM_BEATS,
+            beat_value: BEAT_VALUE,
+            resolution: Vex.Flow.RESOLUTION
+        });
+
+        voice.addTickables(notes);
+
+        // Format and justify the notes to WIDTH
+        formatter.joinVoices([voice]).format([voice], WIDTH);
+
+        return voice;
+    };
+
+    export function draw(...voices : any[]){
+        // TODO: clean canvas
+        stave.draw();
+        
+        for (const v of voices) {
+            v.draw(ctx, stave);
+        }
+    };
+};
 
 
-        function newQuarterNotes(notes: any) {
-            return new Vex.Flow.StaveNote({ keys: notes, duration: 'q' });
-        };
 
 
+/*
         // Create the notes
         var notes = [
             newQuarterNotes(["c/4"]),
@@ -55,59 +98,4 @@ module Sheet {
             .setVerticalJustification(Vex.Flow.Annotation.VerticalJustify.BOTTOM) );
         */
 
-        // Create a voice in 4/4
-        var voice = new Vex.Flow.Voice({
-            num_beats: 8,
-            beat_value: 4,
-            resolution: Vex.Flow.RESOLUTION
-        });
 
-        // Add notes to voice
-        voice.addTickables(notes);
-
-        // Format and justify the notes to 500 pixels
-        var formatter = new Vex.Flow.Formatter();
-        formatter.joinVoices([voice]).format([voice], 500);
-
-        // Render voice
-        voice.draw(ctx, stave);
-
-
-
-        // ---
-
-        // Create the notes
-        var notes2 = [
-            newQuarterNotes(["c/3"]),
-            newQuarterNotes(["c/3"]),
-            newQuarterNotes(["c/3"]),
-            newQuarterNotes(["c/3"]),
-            newQuarterNotes(["c/3"]),
-            newQuarterNotes(["c/3"]),
-            newQuarterNotes(["c/3"]),
-            newQuarterNotes(["c/3"])
-        ];
-
-        for (var x of notes2) {
-            x.setStyle({ fillStyle: "blue", strokeStyle: "blue" });
-        }
-
-        // Create a voice in 4/4
-        var voice2 = new Vex.Flow.Voice({
-            num_beats: 8,
-            beat_value: 4,
-            resolution: Vex.Flow.RESOLUTION
-        });
-
-        // Add notes to voice
-        voice2.addTickables(notes2);
-
-        // Format and justify the notes to 500 pixels
-        var formatter = new Vex.Flow.Formatter();
-        formatter.joinVoices([voice2]).format([voice2], 500);
-
-        // Render voice
-        voice2.draw(ctx, stave);
-
-    };
-};
