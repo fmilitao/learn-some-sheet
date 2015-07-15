@@ -76,8 +76,7 @@ module Sheet {
 
         voice.addTickables(notes);
 
-        // Format and justify the notes to WIDTH
-        formatter.joinVoices([voice]).format([voice], staveTreble.width);
+        formatter.format([voice], staveTreble.width);
 
         return voice;
     };
@@ -121,7 +120,9 @@ module Sheet {
             resolution: Vex.Flow.RESOLUTION
         });
         voice.addTickables(notes);
-        formatter.joinVoices([voice]).format([voice], staveTreble.width);
+        formatter.format([voice], staveTreble.width);
+
+// if octave >= 4 place in staveTreble, else staveBass
 
         return voice;
     };
