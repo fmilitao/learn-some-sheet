@@ -70,7 +70,7 @@ module Sheet {
 
     /** Builds formatted voice where only position 'pos' is non-transparent and shows
         'ns' notes with the specified color. */
-    export function buildKeyStatus(pos: number, color: string, ...ns : string[] ){
+    export function buildKeyStatus(pos: number, color: string, ns : string[] ){
         if (pos < 0 || pos > NUM_BEATS)
             throw ('Invalid position ' + pos + ' (expecting 0 <= pos < ' + NUM_BEATS+ ').');
 
@@ -102,8 +102,14 @@ module Sheet {
         return voice;
     };
 
+    export function buildKeyStatusList(pos: number, color: string, ...ns: string[]) {
+        return buildKeyStatus(pos, color, ns);
+    }
+
     export function draw(...voices : any[]){
-        // TODO: clean canvas
+        // clean previously drawn canvas
+        ctx.clearRect(0, 0, WIDTH, HEIGHT);
+
         stave.draw();
         
         for (const v of voices) {
