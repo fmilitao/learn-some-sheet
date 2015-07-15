@@ -13,8 +13,8 @@ declare var Vex: any; // FIXME: hack until proper 'vexflow.d.ts' is available.
 module Sheet {
 
     export
-    const WIDTH = 500, HEIGHT = 500;
-    //const WIDTH = window.innerWidth, HEIGHT = window.innerHeight;
+    //const WIDTH = 500, HEIGHT = 500;
+    const WIDTH = window.innerWidth, HEIGHT = window.innerHeight;
 
     export
     const NUM_BEATS = 8, BEAT_VALUE = 4;
