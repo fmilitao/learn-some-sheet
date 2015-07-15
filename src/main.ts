@@ -72,10 +72,9 @@ module Game {
                 // note up
                 condRemove(this.wrong, str);
                 condRemove(this.right, str);
-
                 // move to next;
                 if (this.wrong.length === 0 && this.right.length === 0 && wasRight) {
-                    Sheet.fadeNote(this.voice[this.i],'gray');
+                    Sheet.fadeNote(this.voice,this.i,'gray');
                     ++this.i;
                     if( this.i === Sheet.NUM_BEATS ){
                         this.i = 0;

@@ -39,8 +39,8 @@ module Sheet {
 
     };
 
-    export function fadeNote(n: any, color: string){
-        n.setStyle({ strokeStyle: color, fillStyle: color });
+    export function fadeNote(n: any, i:number, color: string){
+        n.tickables[i].setStyle({ strokeStyle: color, fillStyle: color });
     };
 
     /** Builds a formatted voice for the supplied quarter notes. All styled in black. */
