@@ -12,6 +12,7 @@
     },
     "files": [
         "./src/midi.ts",
+        "./src/sheet.ts",
         "./src/main.ts"
     ]
 }
