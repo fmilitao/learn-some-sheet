@@ -55,6 +55,7 @@ module Game {
         generateSheet(){
             this.notes = Game.makeRandomNotes(8); // TODO: enable more than just one note?
             this.voice = Sheet.buildNotes(this.notes); //"c/4", "d/4", "b/4", "c/4", "e/4", "g/4", "f/3", "e/4"
+            document.getElementById('note').innerHTML = this.notes[0];
         }
 
         update(down: boolean, [note,octave]: [string,number] ) {
@@ -80,6 +81,7 @@ module Game {
                         this.i = 0;
                         this.generateSheet();
                     }
+                    document.getElementById('note').innerHTML = this.notes[this.i];
                 }
             }
         }

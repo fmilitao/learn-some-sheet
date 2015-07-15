@@ -31,6 +31,24 @@
     opacity: 0.9;
   }
 
+  .title{
+    position: absolute;
+    top: 0; 
+    font-family: 'Helvetica';
+    font-size: 30px;
+    font-weight: bold;
+    padding: 5px;
+    text-shadow: 2px 2px 5px #aaaaaa;
+  }
+
+  #note{
+    position: absolute;
+    top: 0;
+    right: 0;
+    padding: 5px;
+    font-family: monospace;
+  }
+
 </style>
 <script src='lib/vexflow-min.js'></script>
 <script src='bin/sheet.js'></script>
@@ -38,7 +56,9 @@
 <script src='bin/main.js'></script>
 </head>
 <body>
-  <div id='message'>nothing</div>
+  <div class='title'>Learn some sheet...</div>
+  <div id='message'>?</div>
+  <div id='note'>?</div>
   <canvas>Canvas Error.</canvas>
 </body>
 </html>
