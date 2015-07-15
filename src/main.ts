@@ -18,8 +18,14 @@ window.onload = function(){
 
     Sheet.init();
 
-    const v = Sheet.buildFormattedVoiceForQuarterNotes(
-        "c/4","d/4","b/4","c/4", "e/4", "g/4","f/3","e/4"
+    Sheet.draw(
+        Sheet.buildNotes("c/4", "d/4", "b/4", "c/4", "e/4", "g/4", "f/3", "e/4"),
+        
+        // test correct notes
+        Sheet.buildKeyStatus(1, "green","c/3","e/3"),
+
+        Sheet.buildKeyStatus(1, "red", "d/3", "f/3")
+
+
         );
-    Sheet.draw(v);
 };

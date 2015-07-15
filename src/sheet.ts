@@ -34,7 +34,8 @@ module Sheet {
 
     };
 
-    export function buildFormattedVoiceForQuarterNotes(...ns : string[]){
+    /** Builds a formatted voice for the supplied quarter notes. All styled in black. */
+    export function buildNotes(...ns : string[]){
         if (ns.length !== NUM_BEATS)
             throw ('Invalid number of notes. Expecting '+NUM_BEATS+' but got '+ns.length+'.');
 
@@ -54,6 +55,40 @@ module Sheet {
         voice.addTickables(notes);
 
         // Format and justify the notes to WIDTH
+        formatter.joinVoices([voice]).format([voice], WIDTH);
+
+        return voice;
+    };
+
+    /** Builds formatted voice where only position 'pos' is non-transparent and shows
+        'ns' notes with the specified color. */
+    export function buildKeyStatus(pos: number, color: string, ...ns : string[] ){
+        if (pos < 0 || pos > NUM_BEATS)
+            throw ('Invalid position ' + pos + ' (expecting 0 <= pos < ' + NUM_BEATS+ ').');
+
+        const notes: any[] = new Array(NUM_BEATS);
+        // add transparent notes for placing. note that formatted modifies 
+        // each note, so we cannot reuse the same note multiple times
+        for (let i = 0; i < NUM_BEATS;++i){
+            if( i !== pos ){
+                const invisible = new Vex.Flow.StaveNote({ keys: ['e/4'], duration: 'q' });
+                invisible.setStyle({ strokeStyle: 'rgba(0,0,0,0)', fillStyle: 'rgba(0,0,0,0)' });
+                notes[i] = invisible;
+            }
+        }
+
+        // update 'pos' index in array to mark correct as green, wrong as red.
+        const n = new Vex.Flow.StaveNote({ keys: ns, duration: 'q' });
+        n.setStyle({ strokeStyle: color, fillStyle: color });
+        notes[pos] = n;
+
+        // build and format voice for notes.
+        const voice = new Vex.Flow.Voice({
+            num_beats: NUM_BEATS,
+            beat_value: BEAT_VALUE,
+            resolution: Vex.Flow.RESOLUTION
+        });
+        voice.addTickables(notes);
         formatter.joinVoices([voice]).format([voice], WIDTH);
 
         return voice;
