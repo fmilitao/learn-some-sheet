@@ -100,15 +100,18 @@ module Game {
 
 window.onload = function(){
 
-    function onMIDIFailure(e: Event) {
-        console.error('No access to MIDI devices. '+
+    function onMIDIFailure() {
+        const msg = document.getElementById('message');
+        msg.innerHTML = ('<b>Error:</b> No access to MIDI devices. '+
             'You may need to restart your browser to allow access to your MIDI device. '+
             'Or your browser does not support the WebMIDI API.');
+        msg.className += 'error';
+        msg.style.display = 'block';
     };
 
     // note that access does not work if accessing local file.
     if (!MIDIListener.init(onMIDIFailure, onKey)) {
-        console.error('No WebMIDI support in your browser.');
+        onMIDIFailure();
     }
 
     Sheet.init();
