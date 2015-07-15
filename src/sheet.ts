@@ -44,7 +44,7 @@ module Sheet {
     };
 
     /** Builds a formatted voice for the supplied quarter notes. All styled in black. */
-    export function buildNotes(ns : string[]){
+    export function buildNotes(assist: boolean, ns : string[]){
         if (ns.length !== NUM_BEATS)
             throw ('Invalid number of notes. Expecting '+NUM_BEATS+' but got '+ns.length+'.');
 
@@ -55,6 +55,12 @@ module Sheet {
             const i = new Vex.Flow.StaveNote({ keys: [note], duration: 'q' });
             if (note.indexOf('#') !== -1) {
                 i.addAccidental(0, new Vex.Flow.Accidental("#"));
+            }
+
+            if( assist ){
+                const a = new Vex.Flow.Annotation(note).setVerticalJustification(Vex.Flow.Annotation.VerticalJustify.BOTTOM);
+                //a.font.size = '10pt';
+                i.addModifier(0, a);
             }
             notes.push(i);
         }
@@ -73,8 +79,8 @@ module Sheet {
         return voice;
     };
 
-    export function buildNotesList(...ns: string[]) {
-        return buildNotes(ns);
+    export function buildNotesList(assist: boolean, ...ns: string[]) {
+        return buildNotes(assist, ns);
     }
 
     /** Builds formatted voice where only position 'pos' is non-transparent and shows

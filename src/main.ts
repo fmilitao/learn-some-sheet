@@ -54,8 +54,8 @@ module Game {
 
         generateSheet(){
             this.notes = Game.makeRandomNotes(8); // TODO: enable more than just one note?
-            this.voice = Sheet.buildNotes(this.notes); //"c/4", "d/4", "b/4", "c/4", "e/4", "g/4", "f/3", "e/4"
-            document.getElementById('note').innerHTML = this.notes[0];
+            this.voice = Sheet.buildNotes(true, this.notes); //"c/4", "d/4", "b/4", "c/4", "e/4", "g/4", "f/3", "e/4"
+            //document.getElementById('note').innerHTML = this.notes[0];
         }
 
         update(down: boolean, [note,octave]: [string,number] ) {
@@ -71,11 +71,14 @@ module Game {
             } else {
                 const wasRight = this.right.length > 0;
                 // note up
+
+// FIXME: remove 'right' and use this.notes directly
+
                 condRemove(this.wrong, str);
                 condRemove(this.right, str);
                 // move to next;
                 if (this.wrong.length === 0 && this.right.length === 0 && wasRight) {
-                    Sheet.fadeNote(this.voice,this.i,'gray');
+                    Sheet.fadeNote(this.voice,this.i,'lightgray');
                     ++this.i;
                     if( this.i === Sheet.NUM_BEATS ){
                         this.i = 0;
@@ -89,7 +92,7 @@ module Game {
         getVoices(){
             const vs = [this.voice];
             if (this.right.length > 0)
-                vs.push(Sheet.buildKeyStatus(this.i, 'green', this.right));
+                vs.push(Sheet.buildKeyStatus(this.i, 'lime', this.right));
             if (this.wrong.length > 0)
                 vs.push(Sheet.buildKeyStatus(this.i, 'red', this.wrong));
             return vs;
