@@ -3,8 +3,8 @@ module Game {
 
     const WRONG_COLOR = 'red';
     const CORRECT_COLOR = 'lime';
+    const NORMAL_COLOR = 'black';
     const DONE_COLOR = 'lightgray';
-
 
     function randomNote(){
         // charCode('a') = 97
@@ -18,7 +18,6 @@ module Game {
     };
 
     export function makeRandomNotes(n:number){
-
         const r: string[] = [];
 
         while (r.length < Sheet.NUM_BEATS) {
@@ -48,59 +47,51 @@ module Game {
         public notes: string[];
         public voice: any[];
         public wrong: string[];
-        public right: string[];
 
         constructor(){
             this.i = 0;
             this.wrong = []; //'c#/4', 'f/4', 'd/3', 'e/4'];
-            this.right = []; //'c/4'];
             this.generateSheet();
         }
 
         generateSheet(){
-            this.notes = Game.makeRandomNotes(8); // TODO: enable more than just one note?
-            this.voice = Sheet.buildNotes(true, this.notes); //"c/4", "d/4", "b/4", "c/4", "e/4", "g/4", "f/3", "e/4"
-            //document.getElementById('note').innerHTML = this.notes[0];
-
-            // FIXME: ofset when using labels is wrong.
-            //this.right = [this.notes[0]];
+            this.notes = Game.makeRandomNotes(8);
+            this.voice = Sheet.buildNotes(true, this.notes);
         }
 
         update(down: boolean, [note,octave]: [string,number] ) {
             const str = note + '/' + octave;
+            const isCorrect = str === this.notes[this.i];
 
-            if (down) {
-                // note down
-                if (str === this.notes[this.i]) {
-                    condPush(this.right, str);
+            if (down) { // key is down
+                if ( isCorrect ) {
+                    Sheet.fadeNote(this.voice, this.i, CORRECT_COLOR);
                 } else {
                     condPush(this.wrong, str);
                 }
             } else {
-                const wasRight = this.right.length > 0;
-                // note up
-
-// FIXME: remove 'right' and use this.notes directly
 
                 condRemove(this.wrong, str);
-                condRemove(this.right, str);
-                // move to next;
-                if (this.wrong.length === 0 && this.right.length === 0 && wasRight) {
-                    Sheet.fadeNote(this.voice,this.i, DONE_COLOR);
-                    ++this.i;
-                    if( this.i === Sheet.NUM_BEATS ){
-                        this.i = 0;
-                        this.generateSheet();
+
+                if( isCorrect ){
+                    if( this.wrong.length === 0 ){
+                        // correct note was last note to be released
+                        Sheet.fadeNote(this.voice, this.i, DONE_COLOR);
+                        ++this.i;
+                        if (this.i === Sheet.NUM_BEATS) {
+                            this.i = 0;
+                            this.generateSheet();
+                        }
+                    }else{
+                        // correct note, but there are still wrong notes down
+                        Sheet.fadeNote(this.voice, this.i, NORMAL_COLOR);
                     }
-                    //document.getElementById('note').innerHTML = this.notes[this.i];
                 }
             }
         }
 
         getVoices(){
             const vs = [this.voice];
-            if (this.right.length > 0)
-                vs.push(Sheet.buildKeyStatus(this.i, CORRECT_COLOR, this.right));
             if (this.wrong.length > 0)
                 vs.push(Sheet.buildKeyStatus(this.i, WRONG_COLOR, this.wrong));
             return vs;
