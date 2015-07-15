@@ -1,6 +1,11 @@
 
 module Game {
 
+    const WRONG_COLOR = 'red';
+    const CORRECT_COLOR = 'lime';
+    const DONE_COLOR = 'lightgray';
+
+
     function randomNote(){
         // charCode('a') = 97
         // 'a'..'g' 7 numbers
@@ -81,13 +86,13 @@ module Game {
                 condRemove(this.right, str);
                 // move to next;
                 if (this.wrong.length === 0 && this.right.length === 0 && wasRight) {
-                    Sheet.fadeNote(this.voice,this.i,'lightgray');
+                    Sheet.fadeNote(this.voice,this.i, DONE_COLOR);
                     ++this.i;
                     if( this.i === Sheet.NUM_BEATS ){
                         this.i = 0;
                         this.generateSheet();
                     }
-                    document.getElementById('note').innerHTML = this.notes[this.i];
+                    //document.getElementById('note').innerHTML = this.notes[this.i];
                 }
             }
         }
@@ -95,9 +100,9 @@ module Game {
         getVoices(){
             const vs = [this.voice];
             if (this.right.length > 0)
-                vs.push(Sheet.buildKeyStatus(this.i, 'lime', this.right));
+                vs.push(Sheet.buildKeyStatus(this.i, CORRECT_COLOR, this.right));
             if (this.wrong.length > 0)
-                vs.push(Sheet.buildKeyStatus(this.i, 'red', this.wrong));
+                vs.push(Sheet.buildKeyStatus(this.i, WRONG_COLOR, this.wrong));
             return vs;
         }
 
