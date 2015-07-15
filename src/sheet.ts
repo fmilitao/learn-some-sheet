@@ -13,7 +13,8 @@ declare var Vex: any; // FIXME: hack until proper 'vexflow.d.ts' is available.
 module Sheet {
 
     export
-    const WIDTH = 500, HEIGHT = 700;
+    const WIDTH = 500, HEIGHT = 500;
+    //const WIDTH = window.innerWidth, HEIGHT = window.innerHeight;
 
     export
     const NUM_BEATS = 8, BEAT_VALUE = 4;
@@ -27,15 +28,19 @@ module Sheet {
 
         const canvas = document.getElementsByTagName('canvas')[0];
         const renderer = new Vex.Flow.Renderer(canvas, Vex.Flow.Renderer.Backends.CANVAS);
-        renderer.resize(HEIGHT, WIDTH);
+        renderer.resize(WIDTH, HEIGHT);
 
         ctx = renderer.getContext();
         //ctx.scale(2, 2);
 
-        stave = new Vex.Flow.Stave(10, 100, WIDTH); // x-padding, y-padding, width
+        stave = new Vex.Flow.Stave(0, 100, WIDTH-10); // x-padding, y-padding, width
         stave.addClef('treble');
         stave.setContext(ctx);
 
+    };
+
+    export function fadeNote(n: any, color: string){
+        n.setStyle({ strokeStyle: color, fillStyle: color });
     };
 
     /** Builds a formatted voice for the supplied quarter notes. All styled in black. */
@@ -47,7 +52,11 @@ module Sheet {
 
         for(const note of ns ){
             // only one note, no chords
-            notes.push(new Vex.Flow.StaveNote({ keys: [note], duration: 'q' }))
+            const i = new Vex.Flow.StaveNote({ keys: [note], duration: 'q' });
+            if (note.indexOf('#') !== -1) {
+                i.addAccidental(0, new Vex.Flow.Accidental("#"));
+            }
+            notes.push(i);
         }
 
         const voice = new Vex.Flow.Voice({
@@ -59,7 +68,7 @@ module Sheet {
         voice.addTickables(notes);
 
         // Format and justify the notes to WIDTH
-        formatter.joinVoices([voice]).format([voice], WIDTH);
+        formatter.joinVoices([voice]).format([voice], stave.width);
 
         return voice;
     };
@@ -87,7 +96,13 @@ module Sheet {
 
         // update 'pos' index in array to mark correct as green, wrong as red.
         const n = new Vex.Flow.StaveNote({ keys: ns, duration: 'q' });
+        for (let j = 0; j < ns.length; ++j) {
+            if (ns[j].indexOf('#') !== -1) {
+                n.addAccidental(j, new Vex.Flow.Accidental("#"));
+            }
+        }
         n.setStyle({ strokeStyle: color, fillStyle: color });
+
         notes[pos] = n;
 
         // build and format voice for notes.
@@ -97,7 +112,7 @@ module Sheet {
             resolution: Vex.Flow.RESOLUTION
         });
         voice.addTickables(notes);
-        formatter.joinVoices([voice]).format([voice], WIDTH);
+        formatter.joinVoices([voice]).format([voice], stave.width);
 
         return voice;
     };
