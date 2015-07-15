@@ -106,7 +106,7 @@ module Sheet {
         return buildKeyStatus(pos, color, ns);
     }
 
-    export function draw(...voices : any[]){
+    export function draw(voices : any[]){
         // clean previously drawn canvas
         ctx.clearRect(0, 0, WIDTH, HEIGHT);
 
@@ -116,6 +116,10 @@ module Sheet {
             v.draw(ctx, stave);
         }
     };
+
+    export function drawList(...voices:any[]){
+        draw(voices);
+    }
 };
 
 
