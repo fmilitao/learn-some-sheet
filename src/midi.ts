@@ -14,21 +14,21 @@
 
 module MIDIListener {
 
-    /** @returns false if incompatible browser. */
     export function init(
             // on failure to find any MIDI device
-            onMIDIFailure: (e: Event) => void,
+            onMIDIFailure: () => void,
             // event handler for a note press/release
             onKey: (down: boolean, note: number) => void
-        ) : boolean {
+        ) {
         
         // request MIDI access
-        if (navigator.requestMIDIAccess) {
-            navigator.requestMIDIAccess({ sysex: true }).then(onMIDISuccess, onMIDIFailure);
-        } else {
-            return false;
-        }
-
+        if (!navigator.requestMIDIAccess) {
+            onMIDIFailure();
+            return;
+        } 
+        
+        navigator.requestMIDIAccess({ sysex: true }).then(onMIDISuccess, onMIDIFailure);
+        
         // midi functions
         function onMIDISuccess(midiAccess: WebMidi.MIDIAccess) {
             // when we get a succesful response, run this code
@@ -54,7 +54,6 @@ module MIDIListener {
             }
         };
 
-        return true;
     };
 
     const NOTES = ['c', 'c#', 'd', 'd#', 'e', 'f', 'f#', 'g', 'g#', 'a', 'a#', 'b'];

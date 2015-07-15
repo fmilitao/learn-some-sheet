@@ -58,7 +58,7 @@ module Sheet {
             }
 
             if( assist ){
-                const a = new Vex.Flow.Annotation(note).setVerticalJustification(Vex.Flow.Annotation.VerticalJustify.BOTTOM);
+                const a = new Vex.Flow.Annotation(note.substr(0,1)).setVerticalJustification(Vex.Flow.Annotation.VerticalJustify.BOTTOM);
                 //a.font.size = '10pt';
                 i.addModifier(0, a);
             }

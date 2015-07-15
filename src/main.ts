@@ -47,8 +47,8 @@ module Game {
 
         constructor(){
             this.i = 0;
-            this.wrong = []; //['c#/4', 'f/4', 'd/3', 'e/4'];
-            this.right = []; //['c/4'];
+            this.wrong = []; //'c#/4', 'f/4', 'd/3', 'e/4'];
+            this.right = []; //'c/4'];
             this.generateSheet();
         }
 
@@ -56,6 +56,9 @@ module Game {
             this.notes = Game.makeRandomNotes(8); // TODO: enable more than just one note?
             this.voice = Sheet.buildNotes(true, this.notes); //"c/4", "d/4", "b/4", "c/4", "e/4", "g/4", "f/3", "e/4"
             //document.getElementById('note').innerHTML = this.notes[0];
+
+            // FIXME: ofset when using labels is wrong.
+            //this.right = [this.notes[0]];
         }
 
         update(down: boolean, [note,octave]: [string,number] ) {
@@ -115,9 +118,7 @@ window.onload = function(){
     };
 
     // note that access does not work if accessing local file.
-    if (!MIDIListener.init(onMIDIFailure, onKey)) {
-        onMIDIFailure();
-    }
+    MIDIListener.init(onMIDIFailure, onKey);
 
     Sheet.init();
 
