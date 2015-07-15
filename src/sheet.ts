@@ -12,17 +12,16 @@ declare var Vex: any; // FIXME: hack until proper 'vexflow.d.ts' is available.
 
 module Sheet {
 
-    export
     //const WIDTH = 500, HEIGHT = 500;
-    const WIDTH = window.innerWidth, HEIGHT = window.innerHeight;
-
-    export
-    const NUM_BEATS = 8, BEAT_VALUE = 4;
+    export const WIDTH = window.innerWidth, HEIGHT = window.innerHeight;
+    export const NUM_BEATS = 8; //FIXME: Math.floor((WIDTH - 50) / 40); // one note is off screen!?
+    const BEAT_VALUE = 4;
 
     const formatter = new Vex.Flow.Formatter();
 
     let ctx: any = null;
-    let stave: any = null;
+    let staveTreble: any = null;
+    let staveBass: any = null;
 
     export function init() {
 
@@ -33,9 +32,13 @@ module Sheet {
         ctx = renderer.getContext();
         //ctx.scale(2, 2);
 
-        stave = new Vex.Flow.Stave(0, 100, WIDTH-10); // x-padding, y-padding, width
-        stave.addClef('treble');
-        stave.setContext(ctx);
+        staveTreble = new Vex.Flow.Stave(0, 100, WIDTH - 10); // x-padding, y-padding, width
+        staveTreble.addClef('treble');
+        staveTreble.setContext(ctx);
+
+        staveBass = new Vex.Flow.Stave(0, 180, WIDTH - 10);
+        staveBass.addClef('bass');
+        staveBass.setContext(ctx);
 
     };
 
@@ -74,7 +77,7 @@ module Sheet {
         voice.addTickables(notes);
 
         // Format and justify the notes to WIDTH
-        formatter.joinVoices([voice]).format([voice], stave.width);
+        formatter.joinVoices([voice]).format([voice], staveTreble.width);
 
         return voice;
     };
@@ -118,7 +121,7 @@ module Sheet {
             resolution: Vex.Flow.RESOLUTION
         });
         voice.addTickables(notes);
-        formatter.joinVoices([voice]).format([voice], stave.width);
+        formatter.joinVoices([voice]).format([voice], staveTreble.width);
 
         return voice;
     };
@@ -131,10 +134,13 @@ module Sheet {
         // clean previously drawn canvas
         ctx.clearRect(0, 0, WIDTH, HEIGHT);
 
-        stave.draw();
+        staveBass.draw();
+        staveTreble.draw();
         
+        // FIXME: drawing all on 'staveTreble' is not pretty.
+
         for (const v of voices) {
-            v.draw(ctx, stave);
+            v.draw(ctx, staveTreble);
         }
     };
 

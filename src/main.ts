@@ -20,11 +20,10 @@ module Game {
     export function makeRandomNotes(n:number){
         const r: string[] = [];
 
-        while (r.length < Sheet.NUM_BEATS) {
+        while (r.length < n) {
             const note = randomNote();
-            const octave = randomOctave(4,5);
+            const octave = randomOctave(1,5);
             r.push(note+"/"+octave);
-            //console.log(note + "/" + octave);
         }
 
         return r;
@@ -47,16 +46,26 @@ module Game {
         public notes: string[];
         public voice: any[];
         public wrong: string[];
+        
+        private assist: boolean;
+        private count: number;
 
-        constructor(){
+        /** 
+         * @param {assist:boolean} enable note labels
+         * @param {count:number} number of notes to generate
+         */
+        constructor(assist : boolean, count: number){
+            this.assist = assist;
+            this.count = count;
+            
             this.i = 0;
-            this.wrong = []; //'c#/4', 'f/4', 'd/3', 'e/4'];
+            this.wrong = [];
             this.generateSheet();
         }
 
         generateSheet(){
-            this.notes = Game.makeRandomNotes(8);
-            this.voice = Sheet.buildNotes(true, this.notes);
+            this.notes = Game.makeRandomNotes(this.count);
+            this.voice = Sheet.buildNotes(this.assist, this.notes);
         }
 
         update(down: boolean, [note,octave]: [string,number] ) {
@@ -78,7 +87,7 @@ module Game {
                         // correct note was last note to be released
                         Sheet.fadeNote(this.voice, this.i, DONE_COLOR);
                         ++this.i;
-                        if (this.i === Sheet.NUM_BEATS) {
+                        if (this.i === this.count) {
                             this.i = 0;
                             this.generateSheet();
                         }
@@ -118,7 +127,7 @@ window.onload = function(){
 
     Sheet.init();
 
-    const state = new Game.GameState();
+    const state = new Game.GameState(false,Sheet.NUM_BEATS);
     
     function onKey(down: boolean, note: number) {
         const n = MIDIListener.convertMIDIcodeToNote(note);
