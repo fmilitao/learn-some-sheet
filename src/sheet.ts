@@ -11,8 +11,16 @@ declare var Vex: any; // FIXME: hack until proper 'vexflow.d.ts' is available.
 
 module Sheet {
 
+    //
+    // TYPES
+    //
+
     export type SheetNote = { code: MIDI.Note, ptr: any };
     export type SheetVoice = { notes: SheetNote[], treble: any, bass: any };
+
+    //
+    // CONSTANTS
+    //
 
     // these are defaults to be overwritten by init()
     export let WIDTH = 500, HEIGHT = 500;
@@ -20,8 +28,7 @@ module Sheet {
     const BEAT_VALUE = 4;
 
     const formatter = new Vex.Flow.Formatter();
-    const isBass = (octave: number) => octave < 4;
-    const isBassCode = (code: number) => code < 60;
+    const isBassCode = (code: MIDI.Note) => code < 60;
 
     const TRANSPARENT_COLOR = 'rgba(0,0,0,0)';
 
@@ -70,17 +77,17 @@ module Sheet {
      * Builds a formatted voice for the supplied quarter notes. All styled in black.
      * @return {notes: {note: string, letter: string, voicePts: notePtr },treble: voice, bass: voice}
      */
-     export function buildNotes(assist: boolean, ns : MIDI.Note[]) : SheetVoice {
-         if (ns.length !== NUM_BEATS)
-             throw ('Invalid number of notes. Expecting '+NUM_BEATS+' but got '+ns.length+'.');
+     export function buildNotes(assist: boolean, cs : MIDI.Note[]) : SheetVoice {
+         if (cs.length !== NUM_BEATS)
+             throw ('Invalid number of notes. Expecting '+NUM_BEATS+' but got '+cs.length+'.');
 
          const notesTreble : any[] = [];
          const notesBass: any[] = [];
          const sheetNotes: SheetNote[] = [];
 
-         for(const note of ns ){
-             const ptr = makeSheetNote(note, assist);
-             if( !isBassCode(note) ){
+         for(const code of cs ){
+             const ptr = makeSheetNote(code, assist);
+             if( !isBassCode(code) ){
                  notesTreble.push( ptr );
                  notesBass.push( makeInvisibleNote() );
              }
@@ -89,7 +96,7 @@ module Sheet {
                  notesTreble.push( makeInvisibleNote() );
              }
              sheetNotes.push({
-                 code: note,
+                 code: code,
                  ptr : ptr
              });
          }
@@ -218,7 +225,7 @@ module Sheet {
     function makeSheetNote( code: MIDI.Note, annotation: boolean) {
         const [letter, octave] = MIDI.convertMIDIcodeToNote(code);
         const note = Sheet.toNote(letter,octave);
-        const i = new Vex.Flow.StaveNote({ keys: [note], duration: 'q', clef: ( isBass(octave) ? 'bass' : 'treble') });
+        const i = new Vex.Flow.StaveNote({ keys: [note], duration: 'q', clef: ( isBassCode(code) ? 'bass' : 'treble') });
         if (letter.indexOf('#') !== -1) {
             i.addAccidental(0, new Vex.Flow.Accidental("#"));
         }
