@@ -160,25 +160,26 @@ window.onload = function(){
 
     // note that access does not work if accessing local file.
     MIDIListener.init(onMIDIFailure, onKey);
-
-    Sheet.init();
-
-    const state = new Game.GameState(help,Sheet.NUM_BEATS,minOctave,maxOctave);
     
+    let state : Game.GameState = null;
+
     function onKey(down: boolean, code: number) {
         const n = MIDIListener.convertMIDIcodeToNote(code);
-        
-        console.log('Key: ' + code + ' ' + down+' >> '+n);
+
+        console.log('Key: ' + code + ' ' + down + ' >> ' + n);
 
         state.update(down, n);
-        redraw();
-    };
-
-    function redraw(){
         state.draw();
     };
 
-    // initial draw
-    redraw();
+    window.onresize = function(e : UIEvent) {
+        Sheet.init();
+        state = new Game.GameState(help, Sheet.NUM_BEATS, minOctave, maxOctave);
+        
+        // initial draw
+        state.draw();
+    }
+
+    window.onresize(null);
 
 };

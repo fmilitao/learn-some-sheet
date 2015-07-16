@@ -15,9 +15,9 @@ module Sheet {
     export type SheetNotePtr = { letter: string, octave: number, note: string, ptr: any };
     export type SheetVoice = { notes: SheetNotePtr[], treble: any, bass: any };
 
-    //const WIDTH = 500, HEIGHT = 500;
-    export const WIDTH = window.innerWidth, HEIGHT = window.innerHeight;
-    export const NUM_BEATS = 8; //FIXME: Math.floor((WIDTH - 50) / 40); // one note is off screen!?
+    // these are defaults to be overwritten by init()
+    export let WIDTH = 500, HEIGHT = 500;
+    export let NUM_BEATS = 8;
     const BEAT_VALUE = 4;
 
     const formatter = new Vex.Flow.Formatter();
@@ -31,6 +31,9 @@ module Sheet {
     let brace: any = null;
 
     export function init() {
+        WIDTH = window.innerWidth;
+        HEIGHT = window.innerHeight;
+
         const canvas = document.getElementsByTagName('canvas')[0];
         const renderer = new Vex.Flow.Renderer(canvas, Vex.Flow.Renderer.Backends.CANVAS);
         renderer.resize(WIDTH, HEIGHT);
@@ -38,12 +41,20 @@ module Sheet {
         ctx = renderer.getContext();
         //ctx.scale(2, 2);
 
-        // FIXME: define constants.
-        staveTreble = new Vex.Flow.Stave(50, 100, WIDTH - 100); // x-padding, y-padding, width
+        const START = 50;
+        const TOP = 100;
+        const STAVE_PADDING = 80; //TODO: not quite right?
+
+        NUM_BEATS = Math.floor((WIDTH - START*4) / 40); //TODO: one note is off screen!?
+        console.log(NUM_BEATS);
+        if (NUM_BEATS <= 0)
+            throw ('Screen too small to draw stave.');
+
+        staveTreble = new Vex.Flow.Stave(START, TOP, WIDTH - START*2);
         staveTreble.addClef('treble');
         staveTreble.setContext(ctx);
 
-        staveBass = new Vex.Flow.Stave(50, 180, WIDTH - 100);
+        staveBass = new Vex.Flow.Stave(START, TOP+STAVE_PADDING, WIDTH - START*2);
         staveBass.addClef('bass');
         staveBass.setContext(ctx);
 
