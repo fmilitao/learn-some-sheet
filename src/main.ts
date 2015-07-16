@@ -11,8 +11,8 @@ module Game {
         return min + Math.round(Math.random() * (max-min));
     };
 
-    function makeRandomNotes(n:number,minMIDI:number,maxMIDI:number) : Sheet.MIDINote[] {
-        const r: Sheet.MIDINote[] = [];
+    function makeRandomNotes(n:number,minMIDI:MIDI.Note,maxMIDI:MIDI.Note) : MIDI.Note[] {
+        const r: MIDI.Note[] = [];
         while (r.length < n) {
             r.push( randomRange(minMIDI, maxMIDI) );
         }
@@ -32,14 +32,14 @@ module Game {
     };
 
     export class GameState {
-        public i: number;
-        public notes: Sheet.MIDINote[];
-        public voice: Sheet.SheetVoice;
-        public wrong: Sheet.MIDINote[];
+        private notes: MIDI.Note[]; // sheet notes
+        private voice: Sheet.SheetVoice; // voice for the sheet notes
+        private wrong: MIDI.Note[]; // wrong pressed keys
         
-        private count: number;
+        private i: number; // current notes[i] index.
         private generateSheet: () => void;
 
+        // stats
         private n_correct: number;
         private n_wrong: number;
         private score: HTMLElement;
@@ -48,9 +48,7 @@ module Game {
          * @param {assist:boolean} enable note labels
          * @param {count:number} number of notes to generate
          */
-        constructor(assist : boolean, count: number, minMIDI: number, maxMIDI:number){
-            this.count = count;
-            
+        constructor(assist : boolean, count: number, minMIDI: MIDI.Note, maxMIDI:MIDI.Note){
             this.i = 0;
             this.wrong = [];
 
@@ -65,9 +63,7 @@ module Game {
             this.generateSheet();
         }
 
-        update(down: boolean, code : number) {
-            const [letter, octave] = MIDI.convertMIDIcodeToNote(code);
-            const note = Sheet.toNote(letter,octave);
+        update(down: boolean, code : MIDI.Note) {
             const isCorrect = code === this.notes[this.i];
 
             if (down) { // key is down
@@ -88,7 +84,7 @@ module Game {
                         Sheet.colorNote(this.voice.notes[this.i].ptr, DONE_COLOR);
                         ++this.i;
                         // sheet completed, generate new one
-                        if (this.i === this.count) {
+                        if (this.i === this.notes.length) {
                             this.i = 0;
                             this.generateSheet();
                         }
@@ -106,7 +102,7 @@ module Game {
 
             this.score.innerHTML =
                 'score: '+this.n_correct+'/'+(this.n_correct+this.n_wrong)+
-                ' [sheet='+Math.floor(this.i/this.count*100)+'%,'+
+                ' [sheet='+Math.floor(this.i/this.notes.length*100)+'%,'+
                 ' accuracy='+Math.floor(this.n_correct/(this.n_correct+this.n_wrong)*100)+'%]';
         }
 
@@ -166,7 +162,7 @@ window.onload = function(){
     
     let state : Game.GameState = null;
 
-    function onKey(down: boolean, code: number) {
+    function onKey(down: boolean, code: MIDI.Note) {
         console.log('Key: ' + code + ' ' + down + ' >> ' + MIDI.convertMIDIcodeToNote(code));
 
         state.update(down, code);

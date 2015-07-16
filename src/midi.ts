@@ -14,11 +14,13 @@
 
 module MIDI {
 
+    export type Note = number;
+
     export function init(
             // on failure to find any MIDI device
             onMIDIFailure: () => void,
             // event handler for a note press/release
-            onKey: (down: boolean, noteCode: number) => void
+            onKey: (down: boolean, code: MIDI.Note) => void
         ) {
         
         // request MIDI access
@@ -63,7 +65,7 @@ module MIDI {
      * @pre code ranges between 0..127
      * @returns [note : string, octave : number]
      */
-    export function convertMIDIcodeToNote(code : number): [string,number]{
+    export function convertMIDIcodeToNote(code : MIDI.Note): [string,number]{
         // See [5,7]. Mo pretty way to do this convertion.
         // returns [code, octave] where octave starts at -1.
         return [NOTES[code % NOTES.length], Math.floor((code / NOTES.length) - 1)];
@@ -72,7 +74,7 @@ module MIDI {
     /*
      * @pre letter within NOTES
      */
-    export function convertNoteToMIDIcode(letter : string, octave: number){
+    export function convertNoteToMIDIcode(letter : string, octave: number) : MIDI.Note{
         return NOTES.indexOf(letter) + ((octave+1)*NOTES.length);
     };
 
