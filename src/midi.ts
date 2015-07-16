@@ -12,7 +12,7 @@
     [7] https://itp.nyu.edu/archive/physcomp-spring2014/uploads/midi/midi_screen5.png (MIDI code table)
 */
 
-module MIDIListener {
+module MIDI {
 
     export function init(
             // on failure to find any MIDI device
@@ -68,6 +68,13 @@ module MIDIListener {
         // See [5,7]. Mo pretty way to do this convertion.
         // returns [code, octave] where octave starts at -1.
         return [NOTES[code % NOTES.length], Math.floor((code / NOTES.length) - 1)];
+    };
+
+    /*
+     * @pre letter within NOTES
+     */
+    export function convertNoteToMIDIcode(letter : string, octave: number){
+        return NOTES.indexOf(letter) + ((octave+1)*NOTES.length);
     };
 
 };

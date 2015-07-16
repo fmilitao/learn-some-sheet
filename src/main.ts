@@ -120,7 +120,7 @@ module Game {
             this.score.innerHTML =
                 'score: '+this.n_correct+'/'+(this.n_correct+this.n_wrong)+
                 ' [sheet='+Math.floor(this.i/this.count*100)+'%,'+
-                ' accuracy='+Math.floor(this.n_correct/(this.n_correct+this.n_wrong)*100)+']';
+                ' accuracy='+Math.floor(this.n_correct/(this.n_correct+this.n_wrong)*100)+'%]';
         }
 
     };
@@ -174,12 +174,12 @@ window.onload = function(){
     };
 
     // note that access does not work if accessing local file.
-    MIDIListener.init(onMIDIFailure, onKey);
+    MIDI.init(onMIDIFailure, onKey);
     
     let state : Game.GameState = null;
 
     function onKey(down: boolean, code: number) {
-        const n = MIDIListener.convertMIDIcodeToNote(code);
+        const n = MIDI.convertMIDIcodeToNote(code);
 
         console.log('Key: ' + code + ' ' + down + ' >> ' + n);
 
