@@ -17,7 +17,13 @@ module Sheet {
     // TYPES
     //
     export type Sheet = {
-        staves: StaveNote[],
+        // notes
+        notesTreble: MIDI.Note[][],
+        notesBass: MIDI.Note[][],
+        // StaveNote pointers
+        stavesTreble: StaveNote[],
+        stavesBass: StaveNote[],
+        // voices (which include the StaveNotes)
         treble: Voice,
         bass: Voice
     };
@@ -90,35 +96,49 @@ module Sheet {
          if (cs.length !== NUM_BEATS)
              throw ('Invalid number of notes. Expecting '+NUM_BEATS+' but got '+cs.length+'.');
 
-         const notesTreble : any[] = [];
-         const notesBass: any[] = [];
-         const sheetNotes: StaveNote[] = [];
+         const ts: MIDI.Note[][] = [];
+         const bs: MIDI.Note[][] = [];
+
+         const notesT : any[] = [];
+         const notesB: any[] = [];
+         
+         const stavesT: StaveNote[] = [];
+         const stavesB: StaveNote[] = [];
 
          for(const codes of cs ){
-             const code = codes[0]; // FIXME don't ignore other notes in chord
-             // FIXME: if code.length > 1 then assist must be set to 'false' or label is misplaced.
-             const n = makeSheetNote([code], assist, isBassCode(code));
+             const tsc: MIDI.Note[] = codes.filter(note => !isBassCode(note));
+             const bsc: MIDI.Note[] = codes.filter(note => isBassCode(note));
 
-             if ( isBassCode(code) ) {
-                 notesTreble.push( makeInvisibleNote() );
-                 notesBass.push(n);
-             }else{
-                 notesTreble.push(n);
-                 notesBass.push(makeInvisibleNote());
-             }
-             sheetNotes.push(n);
+             const t = tsc.length === 0 ? makeInvisibleNote() : makeSheetNote(tsc, assist, false);
+             const b = bsc.length === 0 ? makeInvisibleNote() : makeSheetNote(bsc, assist, true);
+
+             stavesT.push(t);
+             stavesB.push(b);
+
+             ts.push(tsc);
+             bs.push(bsc);
          }
 
          const voiceTreble = makeVoice();
          const voiceBass = makeVoice();
 
-         voiceTreble.addTickables(notesTreble);
-         voiceBass.addTickables(notesBass);
+         voiceTreble.addTickables(stavesT);
+         voiceBass.addTickables(stavesB);
 
          const max = Math.max(staveBass.width, staveTreble.width);
          formatter.format([voiceTreble,voiceBass], max);
 
-         return { staves: sheetNotes, treble: voiceTreble, bass: voiceBass };
+         return {
+             // split notes
+             notesTreble : ts,
+             notesBass : bs,
+             // staves
+             stavesTreble: stavesT,
+             stavesBass: stavesB,
+             // voices
+             treble: voiceTreble,
+             bass: voiceBass
+         };
      };
 
 

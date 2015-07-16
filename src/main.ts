@@ -1,7 +1,6 @@
 /*
 TODO:
     - chord code
-    - clean up press key code to work with more than one key down
     - zoom?
 */
 
@@ -54,10 +53,10 @@ module Game {
     };
 
     export class GameState {
-        private notes: MIDI.Note[][]; // sheet notes
-        private voice: Sheet.Sheet; // voice for the sheet notes
+        private sheet: Sheet.Sheet;
         private wrong: MIDI.Note[]; // wrong pressed keys
-        private right: boolean[]; //FIXME: index should match notes[i][*] indexes
+        private rightT: boolean[];
+        private rightB: boolean[];
         private pending: number;
         private i: number; // current notes[i] index.
 
@@ -85,20 +84,23 @@ module Game {
             this.score = document.getElementById('score');
             
             this.generateSheet = function() {
-                this.notes = makeRandomNotes(count, minChord, maxChord, minMIDI, maxMIDI);
-                this.voice = Sheet.buildNotes(assist, this.notes);
+                this.sheet = Sheet.buildNotes(assist,
+                    makeRandomNotes(count, minChord, maxChord, minMIDI, maxMIDI)
+                    );
             };
             this.generateSheet();
 
             this.i = 0;
             this.pending = 0;
             this.wrong = [];
-            this.right = newArray(this.notes[this.i].length,false);
+            this.rightT = newArray(this.sheet.stavesTreble[this.i].length,false);
+            //this.rightB = newArray(this.sheet.stavesBass[this.i].length,false);
         }
 
         update(down: boolean, code : MIDI.Note) {
-            const index = this.notes[this.i].indexOf(code);
-            const isCorrect = index !== -1;
+            const indexT = this.sheet.notesTreble[this.i].indexOf(code);
+            //const indexB = -1; //FIXME this.sheet.notesBass[this.i].indexOf(code);
+            const isCorrect = (indexT !== -1);
 
             if( this.pending === 0 ){
                 // Game state: not all correct keys have been pressed.
@@ -107,11 +109,11 @@ module Game {
                 // we wait for all keys to be released.
 
                 if( isCorrect ){
-                    this.right[index] = down;
+                    this.rightT[indexT] = down;
                     if( down ){
-                        Sheet.colorSingleNote(index, this.voice.staves[this.i], CORRECT_COLOR);
+                        Sheet.colorSingleNote(indexT, this.sheet.stavesTreble[this.i], CORRECT_COLOR);
                     }else{
-                        Sheet.colorSingleNote(index, this.voice.staves[this.i], NORMAL_COLOR);
+                        Sheet.colorSingleNote(indexT, this.sheet.stavesTreble[this.i], NORMAL_COLOR);
                     }
                 }else{ // wrong key
                     if(down){
@@ -123,9 +125,9 @@ module Game {
                 }
 
                 // checks if 'this.right' is true and if there are no wrong keys
-                if( this.right.reduce( (old,current) => old && current, true ) &&
+                if( this.rightT.reduce( (old,current) => old && current, true ) &&
                     this.wrong.length === 0 ){
-                    this.pending = this.right.length;
+                    this.pending = this.rightT.length;
                     // setting 'this.pending' will trigger the wait to all release state.
                 }
 
@@ -136,7 +138,7 @@ module Game {
                     // new key press
                     ++this.pending;
                     if( isCorrect ){
-                        Sheet.colorSingleNote(index, this.voice.staves[this.i], CORRECT_COLOR);
+                        Sheet.colorSingleNote(indexT, this.sheet.stavesTreble[this.i], CORRECT_COLOR);
                     } else{
                         condPush(this.wrong, code);
                         ++this.n_wrong;
@@ -145,7 +147,7 @@ module Game {
                     --this.pending;
                     if( isCorrect ){
                         // grays out correct key
-                        Sheet.colorSingleNote(index, this.voice.staves[this.i], DONE_COLOR );
+                        Sheet.colorSingleNote(indexT, this.sheet.stavesTreble[this.i], DONE_COLOR );
                     }else{
                         condRemove(this.wrong, code);
                     }
@@ -154,26 +156,31 @@ module Game {
                 if( this.pending === 0 ){
                     // all pending keys were released.
                     // gray out the full set (to include annotation if available)
-                    Sheet.colorNote(this.voice.staves[this.i], DONE_COLOR);
-                    this.n_correct += this.right.length;
+
+                    // FIXME: may need to consider bass and treble separately
+                    Sheet.colorNote(this.sheet.stavesTreble[this.i], DONE_COLOR);
+                    //Sheet.colorNote(this.sheet.stavesBass[this.i], DONE_COLOR);
+                    
+                    this.n_correct += this.rightT.length;
                     ++this.i;
-                    if (this.i === this.notes.length) {
+                    if (this.i === this.sheet.stavesTreble.length) {
                         // sheet completed, generate new one
                         this.i = 0;
                         this.generateSheet();
                     }
-                    this.right = newArray(this.notes[this.i].length, false);
+                    this.rightT = newArray(this.sheet.stavesTreble[this.i].length, false);
+                    //this.rightB = newArray(this.sheet.stavesBass[this.i].length, false);
                 }
             }
         }
 
         draw(){
             const {treble: t, bass: b} = Sheet.buildKeyStatus(this.i, WRONG_COLOR, this.wrong);
-            Sheet.draw( [this.voice.treble,t],  [this.voice.bass,b] );
+            Sheet.draw( [this.sheet.treble,t],  [this.sheet.bass,b] );
 
             this.score.innerHTML =
                 'score: '+this.n_correct+'/'+(this.n_correct+this.n_wrong)+
-                ' [sheet='+Math.floor(this.i/this.notes.length*100)+'%,'+
+                ' [sheet='+Math.floor(this.i/this.sheet.notesTreble.length*100)+'%,'+
                 ' accuracy='+Math.floor(this.n_correct/(this.n_correct+this.n_wrong)*100)+'%]';
         }
 
@@ -241,8 +248,10 @@ window.onload = function(){
 
     window.onresize = function(e : UIEvent) {
         Sheet.init();
-        state = new Game.GameState(help, Sheet.NUM_BEATS, 
-            1, 1, //FIXME: work with chords.
+        state = new Game.GameState(
+            help,
+            Sheet.NUM_BEATS, 
+            1, 3, //FIXME: work with chords.
             minMIDI, maxMIDI);
         
         // initial draw
