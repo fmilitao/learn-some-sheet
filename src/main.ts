@@ -33,7 +33,7 @@ module Game {
         return r;
     };
 
-    // aux functions
+    // aux functions, warning: THESE MUTATE 'array'
     function condPush(array: string[], value: string) {
         if (array.indexOf(value) === -1)
             array.push(value);

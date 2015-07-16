@@ -45,10 +45,10 @@ module Sheet {
         const TOP = 100;
         const STAVE_PADDING = 80; //TODO: not quite right?
 
-        NUM_BEATS = Math.floor((WIDTH - START*4) / 40); //TODO: one note is off screen!?
+        NUM_BEATS = Math.floor((WIDTH - START*4) / 40);
+        NUM_BEATS = Math.min(NUM_BEATS, 10); //TODO: one note is off screen if more than 10?
+        NUM_BEATS = Math.max(NUM_BEATS, 1);
         console.log(NUM_BEATS);
-        if (NUM_BEATS <= 0)
-            throw ('Screen too small to draw stave.');
 
         staveTreble = new Vex.Flow.Stave(START, TOP, WIDTH - START*2);
         staveTreble.addClef('treble');
