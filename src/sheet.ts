@@ -106,8 +106,8 @@ module Sheet {
          const stavesB: StaveNote[] = [];
 
          for(const codes of cs ){
-             const tsc: MIDI.Note[] = codes.filter(note => !isBassCode(note));
-             const bsc: MIDI.Note[] = codes.filter(note => isBassCode(note));
+             const tsc: MIDI.Note[] = codes.filter(note => !isBassCode(note)).sort();
+             const bsc: MIDI.Note[] = codes.filter(note => isBassCode(note)).sort();
 
              const t = tsc.length === 0 ? makeInvisibleNote() : makeSheetNote(tsc, assist, false);
              const b = bsc.length === 0 ? makeInvisibleNote() : makeSheetNote(bsc, assist, true);
@@ -115,6 +115,7 @@ module Sheet {
              stavesT.push(t);
              stavesB.push(b);
 
+             // sort to match note order
              ts.push(tsc);
              bs.push(bsc);
          }
@@ -164,8 +165,8 @@ module Sheet {
         // all notes will have same color
 
         // split 'ns' into treble and bass sets
-        const ts : MIDI.Note[] = ns.filter( note => !isBassCode(note) );
-        const bs : MIDI.Note[] = ns.filter( note => isBassCode(note) );
+        const ts : MIDI.Note[] = ns.filter( note => !isBassCode(note) ).sort();
+        const bs : MIDI.Note[] = ns.filter( note => isBassCode(note) ).sort();
 
         if( ts.length > 0 ){
             const n = makeSheetNote(ts, false, false);
@@ -238,6 +239,7 @@ module Sheet {
         return invisible;
     };
 
+    /** pre {codes} is sorted */
     function makeSheetNote(codes: MIDI.Note[], annotation: boolean, isBass : boolean) {
         const bs: string[] = codesToNotes(codes);
         const n = new Vex.Flow.StaveNote({ keys: bs, duration: 'q', clef: (isBass ? 'bass' : 'treble') });
