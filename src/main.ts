@@ -1,8 +1,3 @@
-/*
-TODO:
-    - chord code
-    - zoom?
-*/
 
 module Game {
 
@@ -220,6 +215,8 @@ window.onload = function(){
     let help = false;
     let minMIDI : MIDI.Note = 48;
     let maxMIDI : MIDI.Note = 83;
+    let minChord = 1;
+    let maxChord = 3;
     // EZ-200 MIDI ranges: 36-96 (inclusive)
 
     // override default canvas size
@@ -240,9 +237,12 @@ window.onload = function(){
                     case 'maxMIDI':
                         maxMIDI = parseInt(value);
                         break;
-                    // case 'd':
-                    // case 'debug':
-                    //     debug = (value.toLowerCase() === 'true');
+                    case 'minChord':
+                        minChord = Math.max(parseInt(value),1);
+                        break;
+                    case 'maxChord':
+                        maxChord = parseInt(value);
+                        break;
                     default: // no other options
                         break;
                 }
@@ -277,7 +277,7 @@ window.onload = function(){
         state = new Game.GameState(
             help,
             Sheet.NUM_BEATS, 
-            1, 3, //FIXME: work with chords.
+            minChord, maxChord,
             minMIDI, maxMIDI);
         
         // initial draw
