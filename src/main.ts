@@ -57,7 +57,8 @@ module Game {
         private notes: MIDI.Note[][]; // sheet notes
         private voice: Sheet.Sheet; // voice for the sheet notes
         private wrong: MIDI.Note[]; // wrong pressed keys
-        private right: boolean[]; //index should match notes[i][*] indexes
+        private right: boolean[]; //FIXME: index should match notes[i][*] indexes
+        private pending: number;
         private i: number; // current notes[i] index.
 
         private generateSheet: () => void;
@@ -90,39 +91,78 @@ module Game {
             this.generateSheet();
 
             this.i = 0;
+            this.pending = 0;
             this.wrong = [];
             this.right = newArray(this.notes[this.i].length,false);
         }
 
         update(down: boolean, code : MIDI.Note) {
-            const isCorrect = code === this.notes[this.i][0];
+            const index = this.notes[this.i].indexOf(code);
+            const isCorrect = index !== -1;
 
-            if (down) { // key is down
-                if ( isCorrect ) {
-                    Sheet.colorNote(this.voice.staves[this.i], CORRECT_COLOR);
-                    this.n_correct++;
-                } else {
-                    condPush(this.wrong, code);
-                    this.n_wrong++;
-                }
-            } else {
-
-                condRemove(this.wrong, code);
+            if( this.pending === 0 ){
+                // Game state: not all correct keys have been pressed.
+                // We check for wrong and correct keys. If we only have
+                // correct keys left, then we switch to a state where
+                // we wait for all keys to be released.
 
                 if( isCorrect ){
-                    if( this.wrong.length === 0 ){
-                        // correct note was last note to be released
-                        Sheet.colorNote(this.voice.staves[this.i], DONE_COLOR);
-                        ++this.i;
-                        // sheet completed, generate new one
-                        if (this.i === this.notes.length) {
-                            this.i = 0;
-                            this.generateSheet();
-                        }
+                    this.right[index] = down;
+                    if( down ){
+                        Sheet.colorSingleNote(index, this.voice.staves[this.i], CORRECT_COLOR);
                     }else{
-                        // correct note, but there are still wrong notes down
-                        Sheet.colorNote(this.voice.staves[this.i], NORMAL_COLOR);
+                        Sheet.colorSingleNote(index, this.voice.staves[this.i], NORMAL_COLOR);
                     }
+                }else{ // wrong key
+                    if(down){
+                        condPush(this.wrong, code);
+                        ++this.n_wrong;
+                    }else{
+                        condRemove(this.wrong, code);
+                    }
+                }
+
+                // checks if 'this.right' is true and if there are no wrong keys
+                if( this.right.reduce( (old,current) => old && current, true ) &&
+                    this.wrong.length === 0 ){
+                    this.pending = this.right.length;
+                    // setting 'this.pending' will trigger the wait to all release state.
+                }
+
+            }else{
+                // pending state. We already got the correct keys but we must wait
+                // for all keys to be released before switching to next set of notes
+                if( down ){
+                    // new key press
+                    ++this.pending;
+                    if( isCorrect ){
+                        Sheet.colorSingleNote(index, this.voice.staves[this.i], CORRECT_COLOR);
+                    } else{
+                        condPush(this.wrong, code);
+                        ++this.n_wrong;
+                    }
+                }else{
+                    --this.pending;
+                    if( isCorrect ){
+                        // grays out correct key
+                        Sheet.colorSingleNote(index, this.voice.staves[this.i], DONE_COLOR );
+                    }else{
+                        condRemove(this.wrong, code);
+                    }
+                }
+
+                if( this.pending === 0 ){
+                    // all pending keys were released.
+                    // gray out the full set (to include annotation if available)
+                    Sheet.colorNote(this.voice.staves[this.i], DONE_COLOR);
+                    this.n_correct += this.right.length;
+                    ++this.i;
+                    if (this.i === this.notes.length) {
+                        // sheet completed, generate new one
+                        this.i = 0;
+                        this.generateSheet();
+                    }
+                    this.right = newArray(this.notes[this.i].length, false);
                 }
             }
         }
