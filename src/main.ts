@@ -6,7 +6,7 @@ module Game {
     const NORMAL_COLOR = 'black';
     const DONE_COLOR = 'lightgray';
 
-    function randomNote(){
+    function randomLetter(){
         // charCode('a') = 97
         // 'a'..'g' 7 numbers
         // Math.floor avoids 'h' (97+7)
@@ -17,13 +17,17 @@ module Game {
         return min + Math.round(Math.random() * (max-min));
     };
 
-    export function makeRandomNotes(n:number){
-        const r: string[] = [];
+    function makeRandomNotes(n:number){
+        const r: Sheet.SheetNote[] = [];
 
         while (r.length < n) {
-            const note = randomNote();
+            const letter = randomLetter();
             const octave = randomOctave(1,5);
-            r.push(note+"/"+octave);
+            r.push({
+                letter: letter,
+                octave: octave,
+                note: Sheet.toNote(letter,octave)
+            });
         }
 
         return r;
@@ -43,8 +47,8 @@ module Game {
 
     export class GameState {
         public i: number;
-        public notes: string[];
-        public voice: any[];
+        public notes: Sheet.SheetNote[];
+        public voice: Sheet.SheetVoice;
         public wrong: string[];
         
         private assist: boolean;
@@ -64,28 +68,28 @@ module Game {
         }
 
         generateSheet(){
-            this.notes = Game.makeRandomNotes(this.count);
+            this.notes = makeRandomNotes(this.count);
             this.voice = Sheet.buildNotes(this.assist, this.notes);
         }
 
-        update(down: boolean, [note,octave]: [string,number] ) {
-            const str = note + '/' + octave;
-            const isCorrect = str === this.notes[this.i];
+        update(down: boolean, [letter,octave]: [string,number] ) {
+            const note = Sheet.toNote(letter,octave);
+            const isCorrect = note === this.notes[this.i].note;
 
             if (down) { // key is down
                 if ( isCorrect ) {
-                    Sheet.fadeNote(this.voice, this.i, CORRECT_COLOR);
+                    Sheet.colorNote(this.voice.notes[this.i].ptr, CORRECT_COLOR);
                 } else {
-                    condPush(this.wrong, str);
+                    condPush(this.wrong, note);
                 }
             } else {
 
-                condRemove(this.wrong, str);
+                condRemove(this.wrong, note);
 
                 if( isCorrect ){
                     if( this.wrong.length === 0 ){
                         // correct note was last note to be released
-                        Sheet.fadeNote(this.voice, this.i, DONE_COLOR);
+                        Sheet.colorNote(this.voice.notes[this.i].ptr, DONE_COLOR);
                         ++this.i;
                         if (this.i === this.count) {
                             this.i = 0;
@@ -93,17 +97,15 @@ module Game {
                         }
                     }else{
                         // correct note, but there are still wrong notes down
-                        Sheet.fadeNote(this.voice, this.i, NORMAL_COLOR);
+                        Sheet.colorNote(this.voice.notes[this.i].ptr, NORMAL_COLOR);
                     }
                 }
             }
         }
 
-        getVoices(){
-            const vs = [this.voice];
-            if (this.wrong.length > 0)
-                vs.push(Sheet.buildKeyStatus(this.i, WRONG_COLOR, this.wrong));
-            return vs;
+        draw(){
+            const {treble: t, bass: b} = Sheet.buildKeyStatus(this.i, WRONG_COLOR, this.wrong);
+            Sheet.draw( [this.voice.treble,t],  [this.voice.bass,b] );
         }
 
     };
@@ -127,19 +129,19 @@ window.onload = function(){
 
     Sheet.init();
 
-    const state = new Game.GameState(false,Sheet.NUM_BEATS);
+    const state = new Game.GameState(true,Sheet.NUM_BEATS);
     
-    function onKey(down: boolean, note: number) {
-        const n = MIDIListener.convertMIDIcodeToNote(note);
+    function onKey(down: boolean, code: number) {
+        const n = MIDIListener.convertMIDIcodeToNote(code);
         
-        console.log('Key: ' + note + ' ' + down+' >> '+n);
+        console.log('Key: ' + code + ' ' + down+' >> '+n);
 
         state.update(down, n);
         redraw();
     };
 
     function redraw(){
-        Sheet.draw(state.getVoices());
+        state.draw();
     };
 
     // initial draw

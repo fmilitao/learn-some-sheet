@@ -18,7 +18,7 @@ module MIDIListener {
             // on failure to find any MIDI device
             onMIDIFailure: () => void,
             // event handler for a note press/release
-            onKey: (down: boolean, note: number) => void
+            onKey: (down: boolean, noteCode: number) => void
         ) {
         
         // request MIDI access
@@ -44,7 +44,9 @@ module MIDIListener {
 
         function onMIDIMessage(message: WebMidi.MIDIMessageEvent) {
             const data: Uint8Array = message.data; // this gives us our [command/channel, note, velocity] data.
-            const [command,note,velocity] = <Array<number>><any>data; //FIXME: typescript bug?
+             // FIXME: cast due to typescript bug on destructuring Uint8Arrays?
+             // Reported: https://github.com/Microsoft/TypeScript/issues/3855
+            const [command, note, velocity] = <Array<number>><any>data;
             
             // channel agnostic command type see [3]
             if( (command & 0xf0) === 144 ){

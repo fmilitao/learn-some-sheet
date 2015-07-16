@@ -1,16 +1,19 @@
 /*
  References:
 
- http://www.vexflow.com/docs/tutorial.html
- https://github.com/0xfe/vexflow/wiki/The-VexFlow-FAQ
- https://github.com/0xfe/vexflow/issues/134
-
- TODO: grand staff
+ [1] http://www.vexflow.com/docs/tutorial.html
+ [2] https://github.com/0xfe/vexflow/wiki/The-VexFlow-FAQ
+ [3] https://github.com/0xfe/vexflow/issues/134
+ [4] https://groups.google.com/forum/#!topic/vexflow/kTZYDpzcskg
  */
 
 declare var Vex: any; // FIXME: hack until proper 'vexflow.d.ts' is available.
 
 module Sheet {
+
+    export type SheetNote = { letter: string, octave: number, note: string };
+    export type SheetNotePtr = { letter: string, octave: number, note: string, ptr: any };
+    export type SheetVoice = { notes: SheetNotePtr[], treble: any, bass: any };
 
     //const WIDTH = 500, HEIGHT = 500;
     export const WIDTH = window.innerWidth, HEIGHT = window.innerHeight;
@@ -22,9 +25,9 @@ module Sheet {
     let ctx: any = null;
     let staveTreble: any = null;
     let staveBass: any = null;
+    let brace: any = null;
 
     export function init() {
-
         const canvas = document.getElementsByTagName('canvas')[0];
         const renderer = new Vex.Flow.Renderer(canvas, Vex.Flow.Renderer.Backends.CANVAS);
         renderer.resize(WIDTH, HEIGHT);
@@ -32,151 +35,180 @@ module Sheet {
         ctx = renderer.getContext();
         //ctx.scale(2, 2);
 
-        staveTreble = new Vex.Flow.Stave(0, 100, WIDTH - 10); // x-padding, y-padding, width
+        // FIXME: define constants.
+        staveTreble = new Vex.Flow.Stave(50, 100, WIDTH - 100); // x-padding, y-padding, width
         staveTreble.addClef('treble');
         staveTreble.setContext(ctx);
 
-        staveBass = new Vex.Flow.Stave(0, 180, WIDTH - 10);
+        staveBass = new Vex.Flow.Stave(50, 180, WIDTH - 100);
         staveBass.addClef('bass');
         staveBass.setContext(ctx);
 
+        brace = new Vex.Flow.StaveConnector(staveTreble, staveBass);
+        brace.setType(Vex.Flow.StaveConnector.type.BRACE);
+        brace.setContext(ctx);
     };
 
-    export function fadeNote(n: any, i:number, color: string){
-        n.tickables[i].setStyle({ strokeStyle: color, fillStyle: color });
+    export function colorNote(staveNote: any, color: string){
+        staveNote.setStyle({ strokeStyle: color, fillStyle: color });
     };
 
-    /** Builds a formatted voice for the supplied quarter notes. All styled in black. */
-    export function buildNotes(assist: boolean, ns : string[]){
-        if (ns.length !== NUM_BEATS)
-            throw ('Invalid number of notes. Expecting '+NUM_BEATS+' but got '+ns.length+'.');
+    /**
+     * Builds a formatted voice for the supplied quarter notes. All styled in black.
+     * @return {notes: {note: string, letter: string, voicePts: notePtr },treble: voice, bass: voice}
+     */
+     export function buildNotes(assist: boolean, ns : SheetNote[]) : SheetVoice {
+         if (ns.length !== NUM_BEATS)
+             throw ('Invalid number of notes. Expecting '+NUM_BEATS+' but got '+ns.length+'.');
 
-        const notes : any[] = [];
+         const notesTreble : any[] = [];
+         const notesBass: any[] = [];
+         const sheetNotes: SheetNotePtr[] = [];
 
-        for(const note of ns ){
-            // only one note, no chords
-            const i = new Vex.Flow.StaveNote({ keys: [note], duration: 'q' });
-            if (note.indexOf('#') !== -1) {
-                i.addAccidental(0, new Vex.Flow.Accidental("#"));
-            }
+         for(const note of ns ){
+             const ptr = makeSheetNote(note, assist);
+             if( note.octave >= 4 ){
+                 notesTreble.push( ptr );
+                 notesBass.push( makeInvisibleNote() );
+             }
+             else{
+                 notesBass.push( ptr );
+                 notesTreble.push( makeInvisibleNote() );
+             }
+             sheetNotes.push({
+                 letter : note.letter,
+                 octave : note.octave,
+                 note : note.note,
+                 ptr : ptr
+             });
+         }
 
-            if( assist ){
-                const a = new Vex.Flow.Annotation(note.substr(0,1)).setVerticalJustification(Vex.Flow.Annotation.VerticalJustify.BOTTOM);
-                //a.font.size = '10pt';
-                i.addModifier(0, a);
-            }
-            notes.push(i);
-        }
+         const voiceTreble = makeVoice();
+         const voiceBass = makeVoice();
 
-        const voice = new Vex.Flow.Voice({
-            num_beats: NUM_BEATS,
-            beat_value: BEAT_VALUE,
-            resolution: Vex.Flow.RESOLUTION
-        });
+         voiceTreble.addTickables(notesTreble);
+         voiceBass.addTickables(notesBass);
 
-        voice.addTickables(notes);
+         const max = Math.max(staveBass.width, staveTreble.width);
+         formatter.format([voiceTreble,voiceBass], max);
 
-        formatter.format([voice], staveTreble.width);
+         return { notes: sheetNotes, treble: voiceTreble, bass: voiceBass };
+     };
 
-        return voice;
-    };
-
-    export function buildNotesList(assist: boolean, ...ns: string[]) {
-        return buildNotes(assist, ns);
-    }
 
     /** Builds formatted voice where only position 'pos' is non-transparent and shows
-        'ns' notes with the specified color. */
+    'ns' notes with the specified color. */
     export function buildKeyStatus(pos: number, color: string, ns : string[] ){
         if (pos < 0 || pos > NUM_BEATS)
             throw ('Invalid position ' + pos + ' (expecting 0 <= pos < ' + NUM_BEATS+ ').');
 
-        const notes: any[] = new Array(NUM_BEATS);
-        // add transparent notes for placing. note that formatted modifies 
-        // each note, so we cannot reuse the same note multiple times
+        const notesTreble: any[] = new Array(NUM_BEATS);
+        const notesBass: any[] = new Array(NUM_BEATS);
+
+        // add transparent notes for filling required number of notes. Formatter modifies 
+        // each note, so we CANNOT reuse the same note multiple times.
         for (let i = 0; i < NUM_BEATS;++i){
             if( i !== pos ){
-                const invisible = new Vex.Flow.StaveNote({ keys: ['e/4'], duration: 'q' });
-                invisible.setStyle({ strokeStyle: 'rgba(0,0,0,0)', fillStyle: 'rgba(0,0,0,0)' });
-                notes[i] = invisible;
+                notesTreble[i] = makeInvisibleNote();
+                notesBass[i] = makeInvisibleNote();
             }
         }
 
-        // update 'pos' index in array to mark correct as green, wrong as red.
-        const n = new Vex.Flow.StaveNote({ keys: ns, duration: 'q' });
-        for (let j = 0; j < ns.length; ++j) {
-            if (ns[j].indexOf('#') !== -1) {
-                n.addAccidental(j, new Vex.Flow.Accidental("#"));
+        // build visible colors at position 'pos' using 'color'
+        // all notes will have same color
+
+        // split 'ns' into treble and bass sets
+        const ts : string[] = ns.filter( note => parseInt(note.split('/')[1]) >= 4 );
+        const bs : string [] = ns.filter(note => parseInt(note.split('/')[1]) < 4);
+
+        if( ts.length > 0 ){
+            const n = new Vex.Flow.StaveNote({ keys: ts, duration: 'q' });
+            for (let j = 0; j < ts.length; ++j) {
+                if (ts[j].indexOf('#') !== -1) {
+                    n.addAccidental(j, new Vex.Flow.Accidental("#"));
+                }
             }
+            n.setStyle({ strokeStyle: color, fillStyle: color });
+            notesTreble[pos] = n;
+        }else{
+            // filler if no treble notes exist
+            notesTreble[pos] = makeInvisibleNote();
         }
-        n.setStyle({ strokeStyle: color, fillStyle: color });
 
-        notes[pos] = n;
+        if (bs.length > 0) {
+            const n = new Vex.Flow.StaveNote({ keys: bs, duration: 'q', clef: 'bass' });
+            for (let j = 0; j < bs.length; ++j) {
+                if (bs[j].indexOf('#') !== -1) {
+                    n.addAccidental(j, new Vex.Flow.Accidental("#"));
+                }
+            }
+            n.setStyle({ strokeStyle: color, fillStyle: color });
+            notesBass[pos] = n;
+        } else {
+            // filler if no bass notes exist
+            notesBass[pos] = makeInvisibleNote();
+        }
 
-        // build and format voice for notes.
-        const voice = new Vex.Flow.Voice({
-            num_beats: NUM_BEATS,
-            beat_value: BEAT_VALUE,
-            resolution: Vex.Flow.RESOLUTION
-        });
-        voice.addTickables(notes);
-        formatter.format([voice], staveTreble.width);
+        const voiceTreble = makeVoice();
+        const voiceBass = makeVoice();
 
-// if octave >= 4 place in staveTreble, else staveBass
+        voiceTreble.addTickables(notesTreble);
+        voiceBass.addTickables(notesBass);
 
-        return voice;
+        const max = Math.max(staveBass.width, staveTreble.width);
+        formatter.format([voiceTreble, voiceBass], max);
+
+        return { treble: voiceTreble, bass: voiceBass };
     };
 
-    export function buildKeyStatusList(pos: number, color: string, ...ns: string[]) {
-        return buildKeyStatus(pos, color, ns);
-    }
-
-    export function draw(voices : any[]){
+    export function draw(treble : any[], bass: any[]){
         // clean previously drawn canvas
         ctx.clearRect(0, 0, WIDTH, HEIGHT);
 
         staveBass.draw();
         staveTreble.draw();
+        brace.draw();
         
-        // FIXME: drawing all on 'staveTreble' is not pretty.
+        for (const t of treble) {
+            t.draw(ctx, staveTreble);
+        }
 
-        for (const v of voices) {
-            v.draw(ctx, staveTreble);
+        for (const b of bass) {
+            b.draw(ctx, staveBass);
         }
     };
 
-    export function drawList(...voices:any[]){
-        draw(voices);
-    }
+
+    //
+    // utils
+    //
+
+    export function toNote(letter: string, octave: number){
+        return letter + '/' + octave;
+    };
+
+    function makeInvisibleNote() {
+        const transparent = 'rgba(0,0,0,0)';
+        const invisible = new Vex.Flow.StaveNote({ keys: ['e/4'], duration: 'q' });
+        invisible.setStyle({ strokeStyle: transparent, fillStyle: transparent });
+        return invisible;
+    };
+
+    function makeSheetNote({note:note, octave:octave,letter:letter}: SheetNote, annotation: boolean) {
+        const i = new Vex.Flow.StaveNote({ keys: [note], duration: 'q', clef: (octave < 4 ? 'bass' : 'treble') });
+        if (letter.indexOf('#') !== -1) {
+            i.addAccidental(0, new Vex.Flow.Accidental("#"));
+        }
+        if (annotation) {
+            const a = new Vex.Flow.Annotation(note).setVerticalJustification(Vex.Flow.Annotation.VerticalJustify.BOTTOM);
+            //a.font.size = '10pt';
+            i.addModifier(0, a);
+        }
+        return i;
+    };
+
+    function makeVoice() {
+        return new Vex.Flow.Voice({ num_beats: NUM_BEATS, beat_value: BEAT_VALUE, resolution: Vex.Flow.RESOLUTION });
+    };
+
 };
-
-
-
-
-/*
-        // Create the notes
-        var notes = [
-            newQuarterNotes(["c/4"]),
-            newQuarterNotes(["d/4"]),
-            newQuarterNotes(["b/4"]),
-            newQuarterNotes(["c/4", "e/4", "g/4"]),
-
-            newQuarterNotes(["c/3"]),
-            newQuarterNotes(["e/4"]),
-            newQuarterNotes(["f/4"]), //.addAccidental(0, new Vex.Flow.Accidental("#")),
-            newQuarterNotes(["c/4", "e/4", "g/4"])
-        ];
-
-        //notes[0].setStyle({strokeStyle: "blue", stemStyle: "blue"});
-        notes[0].setStyle({ fillStyle: "green", strokeStyle: "green" });
-        notes[1].setStyle({ fillStyle: "red", strokeStyle: "red" });
-        //    notes[0].addModifier(0, new Vex.Flow.Annotation('okok').setVerticalJustification(Vex.Flow.Annotation.VerticalJustify.BOTTOM));
-    
-        /*
-        notes[0].addModifier(0, 
-            new Vex.Flow.Annotation('d')
-                .setJustification(Vex.Flow.Annotation.Justify.CENTER)
-            .setVerticalJustification(Vex.Flow.Annotation.VerticalJustify.BOTTOM) );
-        */
-
-
