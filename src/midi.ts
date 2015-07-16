@@ -50,7 +50,6 @@ module MIDI {
             
             // channel agnostic command type see [3]
             if( (command & 0xf0) === 144 ){
-                console.log('MIDI data', data); // MIDI data [144, 63, 73]
                 // key is pressed if velocity is not zero.
                 onKey(velocity!==0, note);
             }

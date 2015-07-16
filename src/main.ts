@@ -6,40 +6,26 @@ module Game {
     const NORMAL_COLOR = 'black';
     const DONE_COLOR = 'lightgray';
 
-    function randomLetter(){
-        // charCode('a') = 97
-        // 'a'..'g' 7 numbers
-        // Math.floor avoids 'h' (97+7)
-        return String.fromCharCode(97 + Math.floor(Math.random() * 7));
-    };
-
-    function randomOctave(min:number,max:number){
+    /** from 'min' to 'max' inclusive */
+    function randomRange(min:number,max:number){
         return min + Math.round(Math.random() * (max-min));
     };
 
-    function makeRandomNotes(n:number,minOctave:number,maxOctave:number){
-        const r: Sheet.SheetNote[] = [];
-
+    function makeRandomNotes(n:number,minMIDI:number,maxMIDI:number) : Sheet.MIDINote[] {
+        const r: Sheet.MIDINote[] = [];
         while (r.length < n) {
-            const letter = randomLetter();
-            const octave = randomOctave(minOctave,maxOctave);
-            r.push({
-                letter: letter,
-                octave: octave,
-                note: Sheet.toNote(letter,octave)
-            });
+            r.push( randomRange(minMIDI, maxMIDI) );
         }
-
         return r;
     };
 
     // aux functions, warning: THESE MUTATE 'array'
-    function condPush(array: string[], value: string) {
+    function condPush<T>(array: T[], value: T) {
         if (array.indexOf(value) === -1)
             array.push(value);
     };
 
-    function condRemove(array: string[], value: string) {
+    function condRemove<T>(array: T[], value: T) {
         const j = array.indexOf(value);
         if (j !== -1)
             array.splice(j, 1);
@@ -47,9 +33,9 @@ module Game {
 
     export class GameState {
         public i: number;
-        public notes: Sheet.SheetNote[];
+        public notes: Sheet.MIDINote[];
         public voice: Sheet.SheetVoice;
-        public wrong: string[];
+        public wrong: Sheet.MIDINote[];
         
         private count: number;
         private generateSheet: () => void;
@@ -62,7 +48,7 @@ module Game {
          * @param {assist:boolean} enable note labels
          * @param {count:number} number of notes to generate
          */
-        constructor(assist : boolean, count: number, minOctave: number, maxOctave:number){
+        constructor(assist : boolean, count: number, minMIDI: number, maxMIDI:number){
             this.count = count;
             
             this.i = 0;
@@ -73,27 +59,28 @@ module Game {
             this.score = document.getElementById('score');
             
             this.generateSheet = function() {
-                this.notes = makeRandomNotes(count, minOctave, maxOctave);
+                this.notes = makeRandomNotes(count, minMIDI, maxMIDI);
                 this.voice = Sheet.buildNotes(assist, this.notes);
             };
             this.generateSheet();
         }
 
-        update(down: boolean, [letter,octave]: [string,number] ) {
+        update(down: boolean, code : number) {
+            const [letter, octave] = MIDI.convertMIDIcodeToNote(code);
             const note = Sheet.toNote(letter,octave);
-            const isCorrect = note === this.notes[this.i].note;
+            const isCorrect = code === this.notes[this.i];
 
             if (down) { // key is down
                 if ( isCorrect ) {
                     Sheet.colorNote(this.voice.notes[this.i].ptr, CORRECT_COLOR);
                     this.n_correct++;
                 } else {
-                    condPush(this.wrong, note);
+                    condPush(this.wrong, code);
                     this.n_wrong++;
                 }
             } else {
 
-                condRemove(this.wrong, note);
+                condRemove(this.wrong, code);
 
                 if( isCorrect ){
                     if( this.wrong.length === 0 ){
@@ -131,8 +118,9 @@ module Game {
 window.onload = function(){
 
     let help = true;
-    let minOctave = 3; //EZ-200 min: 2
-    let maxOctave = 5; //EZ-200 max: 6
+    let minMIDI = 48;
+    let maxMIDI = 83;
+    // EZ-200 ranges: 36-96
 
     // override default canvas size
     let parameters = document.URL.split('?');
@@ -147,11 +135,11 @@ window.onload = function(){
                     case 'help':
                         help = (value.toLowerCase() === 'true');
                         break;
-                    case 'minOctave':
-                        minOctave = parseInt(value);
+                    case 'minMIDI':
+                        minMIDI = parseInt(value);
                         break;
-                    case 'maxOctave':
-                        maxOctave = parseInt(value);
+                    case 'maxMIDI':
+                        maxMIDI = parseInt(value);
                         break;
                     // case 'd':
                     // case 'debug':
@@ -179,17 +167,15 @@ window.onload = function(){
     let state : Game.GameState = null;
 
     function onKey(down: boolean, code: number) {
-        const n = MIDI.convertMIDIcodeToNote(code);
+        console.log('Key: ' + code + ' ' + down + ' >> ' + MIDI.convertMIDIcodeToNote(code));
 
-        console.log('Key: ' + code + ' ' + down + ' >> ' + n);
-
-        state.update(down, n);
+        state.update(down, code);
         state.draw();
     };
 
     window.onresize = function(e : UIEvent) {
         Sheet.init();
-        state = new Game.GameState(help, Sheet.NUM_BEATS, minOctave, maxOctave);
+        state = new Game.GameState(help, Sheet.NUM_BEATS, minMIDI, maxMIDI);
         
         // initial draw
         state.draw();
