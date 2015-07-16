@@ -21,6 +21,9 @@ module Sheet {
     const BEAT_VALUE = 4;
 
     const formatter = new Vex.Flow.Formatter();
+    const isBass = (octave: number) => octave < 4;
+
+    const TRANSPARENT_COLOR = 'rgba(0,0,0,0)';
 
     let ctx: any = null;
     let staveTreble: any = null;
@@ -67,7 +70,7 @@ module Sheet {
 
          for(const note of ns ){
              const ptr = makeSheetNote(note, assist);
-             if( note.octave >= 4 ){
+             if( !isBass(note.octave) ){
                  notesTreble.push( ptr );
                  notesBass.push( makeInvisibleNote() );
              }
@@ -118,14 +121,14 @@ module Sheet {
         // all notes will have same color
 
         // split 'ns' into treble and bass sets
-        const ts : string[] = ns.filter( note => parseInt(note.split('/')[1]) >= 4 );
-        const bs : string [] = ns.filter(note => parseInt(note.split('/')[1]) < 4);
+        const ts : string[] = ns.filter( note => !isBass(toLetterOctave(note)[1]) );
+        const bs: string[] = ns.filter(note => isBass(toLetterOctave(note)[1]) );
 
         if( ts.length > 0 ){
             const n = new Vex.Flow.StaveNote({ keys: ts, duration: 'q' });
             for (let j = 0; j < ts.length; ++j) {
                 if (ts[j].indexOf('#') !== -1) {
-                    n.addAccidental(j, new Vex.Flow.Accidental("#"));
+                    n.addAccidental(j, new Vex.Flow.Accidental('#'));
                 }
             }
             n.setStyle({ strokeStyle: color, fillStyle: color });
@@ -139,7 +142,7 @@ module Sheet {
             const n = new Vex.Flow.StaveNote({ keys: bs, duration: 'q', clef: 'bass' });
             for (let j = 0; j < bs.length; ++j) {
                 if (bs[j].indexOf('#') !== -1) {
-                    n.addAccidental(j, new Vex.Flow.Accidental("#"));
+                    n.addAccidental(j, new Vex.Flow.Accidental('#'));
                 }
             }
             n.setStyle({ strokeStyle: color, fillStyle: color });
@@ -187,15 +190,19 @@ module Sheet {
         return letter + '/' + octave;
     };
 
+    export function toLetterOctave(note: string) : [string,number]{
+        const [letter, o] = note.split('/');
+        return [letter, parseInt(o)];
+    };
+
     function makeInvisibleNote() {
-        const transparent = 'rgba(0,0,0,0)';
         const invisible = new Vex.Flow.StaveNote({ keys: ['e/4'], duration: 'q' });
-        invisible.setStyle({ strokeStyle: transparent, fillStyle: transparent });
+        invisible.setStyle({ strokeStyle: TRANSPARENT_COLOR, fillStyle: TRANSPARENT_COLOR });
         return invisible;
     };
 
     function makeSheetNote({note:note, octave:octave,letter:letter}: SheetNote, annotation: boolean) {
-        const i = new Vex.Flow.StaveNote({ keys: [note], duration: 'q', clef: (octave < 4 ? 'bass' : 'treble') });
+        const i = new Vex.Flow.StaveNote({ keys: [note], duration: 'q', clef: ( isBass(octave) ? 'bass' : 'treble') });
         if (letter.indexOf('#') !== -1) {
             i.addAccidental(0, new Vex.Flow.Accidental("#"));
         }

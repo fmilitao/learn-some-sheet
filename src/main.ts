@@ -17,12 +17,12 @@ module Game {
         return min + Math.round(Math.random() * (max-min));
     };
 
-    function makeRandomNotes(n:number){
+    function makeRandomNotes(n:number,minOctave:number,maxOctave:number){
         const r: Sheet.SheetNote[] = [];
 
         while (r.length < n) {
             const letter = randomLetter();
-            const octave = randomOctave(1,5);
+            const octave = randomOctave(minOctave,maxOctave);
             r.push({
                 letter: letter,
                 octave: octave,
@@ -68,7 +68,7 @@ module Game {
         }
 
         generateSheet(){
-            this.notes = makeRandomNotes(this.count);
+            this.notes = makeRandomNotes(this.count,1,5); // octave range [1..5]
             this.voice = Sheet.buildNotes(this.assist, this.notes);
         }
 
@@ -91,6 +91,7 @@ module Game {
                         // correct note was last note to be released
                         Sheet.colorNote(this.voice.notes[this.i].ptr, DONE_COLOR);
                         ++this.i;
+                        // sheet completed, generate new one
                         if (this.i === this.count) {
                             this.i = 0;
                             this.generateSheet();
