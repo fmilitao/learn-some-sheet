@@ -51,25 +51,24 @@ module Game {
         public voice: Sheet.SheetVoice;
         public wrong: string[];
         
-        private assist: boolean;
         private count: number;
+        private generateSheet: () => void;
 
         /** 
          * @param {assist:boolean} enable note labels
          * @param {count:number} number of notes to generate
          */
-        constructor(assist : boolean, count: number){
-            this.assist = assist;
+        constructor(assist : boolean, count: number, minOctave: number, maxOctave:number){
             this.count = count;
             
             this.i = 0;
             this.wrong = [];
+            
+            this.generateSheet = function() {
+                this.notes = makeRandomNotes(count, minOctave, maxOctave);
+                this.voice = Sheet.buildNotes(assist, this.notes);
+            };
             this.generateSheet();
-        }
-
-        generateSheet(){
-            this.notes = makeRandomNotes(this.count,1,5); // octave range [1..5]
-            this.voice = Sheet.buildNotes(this.assist, this.notes);
         }
 
         update(down: boolean, [letter,octave]: [string,number] ) {
@@ -116,6 +115,40 @@ module Game {
 
 window.onload = function(){
 
+    let help = true;
+    let minOctave = 2;
+    let maxOctave = 6;
+
+    // override default canvas size
+    let parameters = document.URL.split('?');
+    if (parameters.length > 1) {
+        parameters = parameters[1].split('&');
+        for (let i = 0; i < parameters.length; ++i) {
+            let tmp = parameters[i].split('=');
+            if (tmp.length > 1) {
+                let option = tmp[0];
+                let value = tmp[1];
+                switch (option) {
+                    case 'help':
+                        help = (value.toLowerCase() === 'true');
+                        break;
+                    case 'minOctave':
+                        minOctave = parseInt(value);
+                        break;
+                    case 'maxOctave':
+                        maxOctave = parseInt(value);
+                        break;
+                    // case 'd':
+                    // case 'debug':
+                    //     debug = (value.toLowerCase() === 'true');
+                    default: // no other options
+                        break;
+                }
+            }
+        }
+    }
+
+
     function onMIDIFailure() {
         const msg = document.getElementById('message');
         msg.innerHTML = ('<b>Error:</b> No access to MIDI devices. '+
@@ -130,7 +163,7 @@ window.onload = function(){
 
     Sheet.init();
 
-    const state = new Game.GameState(true,Sheet.NUM_BEATS);
+    const state = new Game.GameState(help,Sheet.NUM_BEATS,minOctave,maxOctave);
     
     function onKey(down: boolean, code: number) {
         const n = MIDIListener.convertMIDIcodeToNote(code);
