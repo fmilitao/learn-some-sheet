@@ -68,7 +68,7 @@ module Game {
 
             if (down) { // key is down
                 if ( isCorrect ) {
-                    Sheet.colorNote(this.voice.notes[this.i].stave, CORRECT_COLOR);
+                    Sheet.colorNote(this.voice.staves[this.i], CORRECT_COLOR);
                     this.n_correct++;
                 } else {
                     condPush(this.wrong, code);
@@ -81,7 +81,7 @@ module Game {
                 if( isCorrect ){
                     if( this.wrong.length === 0 ){
                         // correct note was last note to be released
-                        Sheet.colorNote(this.voice.notes[this.i].stave, DONE_COLOR);
+                        Sheet.colorNote(this.voice.staves[this.i], DONE_COLOR);
                         ++this.i;
                         // sheet completed, generate new one
                         if (this.i === this.notes.length) {
@@ -90,7 +90,7 @@ module Game {
                         }
                     }else{
                         // correct note, but there are still wrong notes down
-                        Sheet.colorNote(this.voice.notes[this.i].stave, NORMAL_COLOR);
+                        Sheet.colorNote(this.voice.staves[this.i], NORMAL_COLOR);
                     }
                 }
             }

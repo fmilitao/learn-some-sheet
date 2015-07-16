@@ -19,14 +19,8 @@ module Sheet {
     //
     // TYPES
     //
-
-    export type Note = {
-        // NOTE: index in 'code' MUST match index in 'stave'
-        code: MIDI.Note[],
-        stave: StaveNote
-    };
     export type Sheet = {
-        notes: Sheet.Note[],
+        staves: StaveNote[],
         treble: Voice,
         bass: Voice
     };
@@ -96,7 +90,7 @@ module Sheet {
 
          const notesTreble : any[] = [];
          const notesBass: any[] = [];
-         const sheetNotes: Sheet.Note[] = [];
+         const sheetNotes: StaveNote[] = [];
 
          for(const code of cs ){
              const staveNote = makeSheetNote(code, assist);
@@ -108,10 +102,7 @@ module Sheet {
                  notesBass.push(staveNote);
                  notesTreble.push( makeInvisibleNote() );
              }
-             sheetNotes.push({
-                 code: [code],
-                 stave : staveNote
-             });
+             sheetNotes.push( staveNote );
          }
 
          const voiceTreble = makeVoice();
@@ -123,7 +114,7 @@ module Sheet {
          const max = Math.max(staveBass.width, staveTreble.width);
          formatter.format([voiceTreble,voiceBass], max);
 
-         return { notes: sheetNotes, treble: voiceTreble, bass: voiceBass };
+         return { staves: sheetNotes, treble: voiceTreble, bass: voiceBass };
      };
 
 
