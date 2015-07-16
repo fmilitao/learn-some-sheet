@@ -1,3 +1,9 @@
+/*
+TODO:
+    - chord code
+    - clean up press key code to work with more than one key down
+    - zoom?
+*/
 
 module Game {
 
@@ -11,10 +17,19 @@ module Game {
         return min + Math.round(Math.random() * (max-min));
     };
 
-    function makeRandomNotes(n:number,minMIDI:MIDI.Note,maxMIDI:MIDI.Note) : MIDI.Note[] {
-        const r: MIDI.Note[] = [];
+    function makeRandomNotes(
+        n:number,
+        minChord: number, maxChord: number,
+        minMIDI:MIDI.Note,maxMIDI:MIDI.Note
+        ) : MIDI.Note[][] {
+        const r: MIDI.Note[][] = [];
         while (r.length < n) {
-            r.push( randomRange(minMIDI, maxMIDI) );
+            const c: MIDI.Note[] = [];
+            const l = randomRange(minChord, maxChord);
+            while( c.length < l ){
+                c.push( randomRange(minMIDI, maxMIDI) );
+            }
+            r.push(c);
         }
         return r;
     };
@@ -31,12 +46,20 @@ module Game {
             array.splice(j, 1);
     };
 
+    function newArray<T>(n:number, initial:T){
+        const a = new Array<T>(n);
+        for (let i = 0; i < a.length; ++i)
+            a[i] = initial;
+        return a;
+    };
+
     export class GameState {
-        private notes: MIDI.Note[]; // sheet notes
+        private notes: MIDI.Note[][]; // sheet notes
         private voice: Sheet.Sheet; // voice for the sheet notes
         private wrong: MIDI.Note[]; // wrong pressed keys
-        
+        private right: boolean[]; //index should match notes[i][*] indexes
         private i: number; // current notes[i] index.
+
         private generateSheet: () => void;
 
         // stats
@@ -48,23 +71,31 @@ module Game {
          * @param {assist:boolean} enable note labels
          * @param {count:number} number of notes to generate
          */
-        constructor(assist : boolean, count: number, minMIDI: MIDI.Note, maxMIDI:MIDI.Note){
-            this.i = 0;
-            this.wrong = [];
+         constructor(
+             assist : boolean,
+             count: number,
+             minChord: number, maxChord: number,
+             minMIDI: MIDI.Note, maxMIDI:MIDI.Note
+             ){
 
+            // stats
             this.n_correct = 0;
             this.n_wrong = 0;
             this.score = document.getElementById('score');
             
             this.generateSheet = function() {
-                this.notes = makeRandomNotes(count, minMIDI, maxMIDI);
+                this.notes = makeRandomNotes(count, minChord, maxChord, minMIDI, maxMIDI);
                 this.voice = Sheet.buildNotes(assist, this.notes);
             };
             this.generateSheet();
+
+            this.i = 0;
+            this.wrong = [];
+            this.right = newArray(this.notes[this.i].length,false);
         }
 
         update(down: boolean, code : MIDI.Note) {
-            const isCorrect = code === this.notes[this.i];
+            const isCorrect = code === this.notes[this.i][0];
 
             if (down) { // key is down
                 if ( isCorrect ) {
@@ -170,7 +201,9 @@ window.onload = function(){
 
     window.onresize = function(e : UIEvent) {
         Sheet.init();
-        state = new Game.GameState(help, Sheet.NUM_BEATS, minMIDI, maxMIDI);
+        state = new Game.GameState(help, Sheet.NUM_BEATS, 
+            1, 1, //FIXME: work with chords.
+            minMIDI, maxMIDI);
         
         // initial draw
         state.draw();
