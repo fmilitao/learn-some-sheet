@@ -48,7 +48,6 @@ module Sheet {
         NUM_BEATS = Math.floor((WIDTH - START*4) / 40);
         NUM_BEATS = Math.min(NUM_BEATS, 10); //TODO: one note is off screen if more than 10?
         NUM_BEATS = Math.max(NUM_BEATS, 1);
-        console.log(NUM_BEATS);
 
         staveTreble = new Vex.Flow.Stave(START, TOP, WIDTH - START*2);
         staveTreble.addClef('treble');

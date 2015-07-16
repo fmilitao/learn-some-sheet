@@ -54,6 +54,10 @@ module Game {
         private count: number;
         private generateSheet: () => void;
 
+        private n_correct: number;
+        private n_wrong: number;
+        private score: HTMLElement;
+
         /** 
          * @param {assist:boolean} enable note labels
          * @param {count:number} number of notes to generate
@@ -63,6 +67,10 @@ module Game {
             
             this.i = 0;
             this.wrong = [];
+
+            this.n_correct = 0;
+            this.n_wrong = 0;
+            this.score = document.getElementById('score');
             
             this.generateSheet = function() {
                 this.notes = makeRandomNotes(count, minOctave, maxOctave);
@@ -78,8 +86,10 @@ module Game {
             if (down) { // key is down
                 if ( isCorrect ) {
                     Sheet.colorNote(this.voice.notes[this.i].ptr, CORRECT_COLOR);
+                    this.n_correct++;
                 } else {
                     condPush(this.wrong, note);
+                    this.n_wrong++;
                 }
             } else {
 
@@ -106,6 +116,11 @@ module Game {
         draw(){
             const {treble: t, bass: b} = Sheet.buildKeyStatus(this.i, WRONG_COLOR, this.wrong);
             Sheet.draw( [this.voice.treble,t],  [this.voice.bass,b] );
+
+            this.score.innerHTML =
+                'score: '+this.n_correct+'/'+(this.n_correct+this.n_wrong)+
+                ' [sheet='+Math.floor(this.i/this.count*100)+'%,'+
+                ' accuracy='+Math.floor(this.n_correct/(this.n_correct+this.n_wrong)*100)+']';
         }
 
     };
@@ -116,8 +131,8 @@ module Game {
 window.onload = function(){
 
     let help = true;
-    let minOctave = 2;
-    let maxOctave = 6;
+    let minOctave = 3; //EZ-200 min: 2
+    let maxOctave = 5; //EZ-200 max: 6
 
     // override default canvas size
     let parameters = document.URL.split('?');
@@ -152,7 +167,7 @@ window.onload = function(){
     function onMIDIFailure() {
         const msg = document.getElementById('message');
         msg.innerHTML = ('<b>Error:</b> No access to MIDI devices. '+
-            'You may need to restart your browser to allow access to your MIDI device. '+
+            'You may need to restart your browser to allow access. '+
             'Or your browser does not support the WebMIDI API.');
         msg.className += 'error';
         msg.style.display = 'block';
