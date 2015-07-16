@@ -33,7 +33,7 @@ module Game {
 
     export class GameState {
         private notes: MIDI.Note[]; // sheet notes
-        private voice: Sheet.SheetVoice; // voice for the sheet notes
+        private voice: Sheet.Sheet; // voice for the sheet notes
         private wrong: MIDI.Note[]; // wrong pressed keys
         
         private i: number; // current notes[i] index.
@@ -68,7 +68,7 @@ module Game {
 
             if (down) { // key is down
                 if ( isCorrect ) {
-                    Sheet.colorNote(this.voice.notes[this.i].ptr, CORRECT_COLOR);
+                    Sheet.colorNote(this.voice.notes[this.i].stave, CORRECT_COLOR);
                     this.n_correct++;
                 } else {
                     condPush(this.wrong, code);
@@ -81,7 +81,7 @@ module Game {
                 if( isCorrect ){
                     if( this.wrong.length === 0 ){
                         // correct note was last note to be released
-                        Sheet.colorNote(this.voice.notes[this.i].ptr, DONE_COLOR);
+                        Sheet.colorNote(this.voice.notes[this.i].stave, DONE_COLOR);
                         ++this.i;
                         // sheet completed, generate new one
                         if (this.i === this.notes.length) {
@@ -90,7 +90,7 @@ module Game {
                         }
                     }else{
                         // correct note, but there are still wrong notes down
-                        Sheet.colorNote(this.voice.notes[this.i].ptr, NORMAL_COLOR);
+                        Sheet.colorNote(this.voice.notes[this.i].stave, NORMAL_COLOR);
                     }
                 }
             }
@@ -114,19 +114,18 @@ module Game {
 window.onload = function(){
 
     let help = true;
-    let minMIDI = 48;
-    let maxMIDI = 83;
-    // EZ-200 ranges: 36-96
+    let minMIDI : MIDI.Note = 48;
+    let maxMIDI : MIDI.Note = 83;
+    // EZ-200 MIDI ranges: 36-96 (inclusive)
 
     // override default canvas size
     let parameters = document.URL.split('?');
     if (parameters.length > 1) {
         parameters = parameters[1].split('&');
         for (let i = 0; i < parameters.length; ++i) {
-            let tmp = parameters[i].split('=');
+            const tmp = parameters[i].split('=');
             if (tmp.length > 1) {
-                let option = tmp[0];
-                let value = tmp[1];
+                const [option,value] = tmp;
                 switch (option) {
                     case 'help':
                         help = (value.toLowerCase() === 'true');

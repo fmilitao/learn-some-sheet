@@ -8,6 +8,11 @@
  */
 
 declare var Vex: any; // FIXME: hack until proper 'vexflow.d.ts' is available.
+declare type Voice = any;
+declare type StaveNote = any;
+
+// one: staveNote.setKeyStyle( INDEX, {shadowColor: "yellow", shadowBlur: 3});
+// all: staveNote.setStyle({strokeStyle: "blue", stemStyle: "blue"});
 
 module Sheet {
 
@@ -15,8 +20,16 @@ module Sheet {
     // TYPES
     //
 
-    export type SheetNote = { code: MIDI.Note, ptr: any };
-    export type SheetVoice = { notes: SheetNote[], treble: any, bass: any };
+    export type Note = {
+        // NOTE: index in 'code' MUST match index in 'stave'
+        code: MIDI.Note[],
+        stave: StaveNote
+    };
+    export type Sheet = {
+        notes: Sheet.Note[],
+        treble: Voice,
+        bass: Voice
+    };
 
     //
     // CONSTANTS
@@ -77,27 +90,27 @@ module Sheet {
      * Builds a formatted voice for the supplied quarter notes. All styled in black.
      * @return {notes: {note: string, letter: string, voicePts: notePtr },treble: voice, bass: voice}
      */
-     export function buildNotes(assist: boolean, cs : MIDI.Note[]) : SheetVoice {
+     export function buildNotes(assist: boolean, cs : MIDI.Note[]) : Sheet.Sheet {
          if (cs.length !== NUM_BEATS)
              throw ('Invalid number of notes. Expecting '+NUM_BEATS+' but got '+cs.length+'.');
 
          const notesTreble : any[] = [];
          const notesBass: any[] = [];
-         const sheetNotes: SheetNote[] = [];
+         const sheetNotes: Sheet.Note[] = [];
 
          for(const code of cs ){
-             const ptr = makeSheetNote(code, assist);
+             const staveNote = makeSheetNote(code, assist);
              if( !isBassCode(code) ){
-                 notesTreble.push( ptr );
+                 notesTreble.push(staveNote);
                  notesBass.push( makeInvisibleNote() );
              }
              else{
-                 notesBass.push( ptr );
+                 notesBass.push(staveNote);
                  notesTreble.push( makeInvisibleNote() );
              }
              sheetNotes.push({
-                 code: code,
-                 ptr : ptr
+                 code: [code],
+                 stave : staveNote
              });
          }
 
@@ -180,7 +193,7 @@ module Sheet {
         return { treble: voiceTreble, bass: voiceBass };
     };
 
-    export function draw(treble : any[], bass: any[]){
+    export function draw(treble : Voice[], bass: Voice[]){
         // clean previously drawn canvas
         ctx.clearRect(0, 0, WIDTH, HEIGHT);
 
