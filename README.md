@@ -1,4 +1,4 @@
-# play-some-sheet
+# learn-some-sheet
 
 Practice reading music sheet. Requires MIDI device and browser support for WebMIDI.
 
