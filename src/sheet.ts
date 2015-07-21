@@ -86,6 +86,12 @@ module Sheet {
         staveNote.setKeyStyle(index, { stemStyle : color, strokeStyle: color, fillStyle: color });
     };
 
+    export function ghostNote(staveNote: any) {
+        // FIXME this looks unsafe and doesn't work! how to replace a note??
+        const ghosts = staveNote.note_heads.map( ( x : any ) => makeInvisibleNote() );
+        staveNote.note_heads = ghosts;
+    };
+
     /**
      * Builds a formatted voice for the supplied quarter notes. All styled in black.
      * @return {notes: {note: string, letter: string, voicePts: notePtr },treble: voice, bass: voice}

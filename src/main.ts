@@ -302,13 +302,6 @@ window.onload = function(){
             .style("opacity", 0)
             .remove();
 
-
-        // add keyboard mode
-        if (minChord === 1 && maxChord === 1) {
-            // FIXME: e.charCode always returns 0 ??
-            window.onkeydown = (e: KeyboardEvent) => onKeyboard(true, e.keyCode);
-            window.onkeyup = (e: KeyboardEvent) => onKeyboard(false, e.keyCode);
-        }
     };
 
     // note that access does not work if accessing local file.
@@ -329,6 +322,30 @@ window.onload = function(){
             onKey(down, fakeNote);
         }
     };
+
+    // add keyboard mode
+    if (minChord === 1 && maxChord === 1) {
+        window.onkeydown = (e: KeyboardEvent) => onKeyboard(true, e.keyCode);
+        window.onkeyup = (e: KeyboardEvent) => onKeyboard(false, e.keyCode);
+
+        const m = d3.select("body")
+            .append("div")
+            .style("right", "0px")
+            .style("top", "-200px")
+            .style("display", "block")
+            .style("opacity", 1)
+            .attr("class", 'warn')
+            .html('<b>Info:</b> Keyboard control available.');
+
+        (<any>m).transition()
+            .delay(500)
+            .duration(1000)
+            .style("top", "0px")
+            .transition()
+            .delay(5000)
+            .style("opacity", 0)
+            .remove();
+    }
 
     window.onresize = function(e : UIEvent) {
         Sheet.init();
