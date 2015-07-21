@@ -32,6 +32,8 @@ module Sheet {
     // CONSTANTS
     //
 
+    const TRANSPARENT_COLOR = 'rgba(0,0,0,0)';
+
     // these are defaults to be overwritten by init()
     export let WIDTH = 500, HEIGHT = 500;
     export let NUM_BEATS = 8;
@@ -79,17 +81,11 @@ module Sheet {
     };
 
     export function colorNote(staveNote: any, color: string){
-        staveNote.setStyle({ stemStyle: color, strokeStyle: color, fillStyle: color });
+        staveNote.setStyle({ /* stemStyle: color,*/ strokeStyle: color, fillStyle: color });
     };
 
     export function colorSingleNote(index: number, staveNote: any, color: string) {
-        staveNote.setKeyStyle(index, { stemStyle : color, strokeStyle: color, fillStyle: color });
-    };
-
-    export function ghostNote(staveNote: any) {
-        // FIXME this looks unsafe and doesn't work! how to replace a note??
-        const ghosts = staveNote.note_heads.map( ( x : any ) => makeInvisibleNote() );
-        staveNote.note_heads = ghosts;
+        staveNote.setKeyStyle(index, { /* stemStyle : color, */ strokeStyle: color, fillStyle: color });
     };
 
     /**
@@ -238,7 +234,11 @@ module Sheet {
     };
 
     function makeInvisibleNote() {
-        return new Vex.Flow.GhostNote({ duration: 'q' });
+        const invisible = new Vex.Flow.StaveNote({ keys: ['e/4'], duration: 'q' });
+        invisible.setStyle({ strokeStyle: TRANSPARENT_COLOR, fillStyle: TRANSPARENT_COLOR });
+        return invisible;
+        // GhostNote does not align properly, must use transparent note instead.
+        //return new Vex.Flow.GhostNote({ duration: 'q' });
     };
 
     /** pre {codes} is sorted */
