@@ -196,6 +196,33 @@ module Game {
             }
         }
 
+        keyPressToCode( charCode : number ) : MIDI.Note{
+            const treble = this.sheet.notesTreble[this.i].length;
+            const bass = this.sheet.notesBass[this.i].length;
+            
+            if (( treble + bass ) > 1)
+                throw 'This function only work when there is only one note to play...'
+
+            const note = treble === 1 ? this.sheet.notesTreble[this.i][0] : this.sheet.notesBass[this.i][0];
+            
+            const [letter,_] = MIDI.convertMIDIcodeToNote(note);
+            const key = String.fromCharCode(charCode).toLowerCase();
+
+            //console.log(' ' + letter + ' ' + key);
+
+            if ( letter.indexOf(key) === 0)
+                return note;
+
+            const A_CODE = 65;
+            const G_CODE = 71;
+            // translates any key from 'a' to 'g' into a MIDI note on octave 4
+            if( charCode >= A_CODE && charCode <= G_CODE ){
+                return MIDI.convertNoteToMIDIcode(key,4);
+            }
+
+            return -1; // invalid key, ignore me.
+        }
+
         draw(){
             const {treble: t, bass: b} = Sheet.buildKeyStatus(this.i, WRONG_COLOR, this.wrong);
             Sheet.draw( [this.sheet.treble,t],  [this.sheet.bass,b] );
@@ -274,6 +301,14 @@ window.onload = function(){
             .delay(11000)
             .style("opacity", 0)
             .remove();
+
+
+        // add keyboard mode
+        if (minChord === 1 && maxChord === 1) {
+            // FIXME: e.charCode always returns 0 ??
+            window.onkeydown = (e: KeyboardEvent) => onKeyboard(true, e.keyCode);
+            window.onkeyup = (e: KeyboardEvent) => onKeyboard(false, e.keyCode);
+        }
     };
 
     // note that access does not work if accessing local file.
@@ -282,10 +317,17 @@ window.onload = function(){
     let state : Game.GameState = null;
 
     function onKey(down: boolean, code: MIDI.Note) {
-        console.log('Key: ' + code + ' ' + down + ' >> ' + MIDI.convertMIDIcodeToNote(code));
+        //console.log('Key: ' + code + ' ' + down + ' >> ' + MIDI.convertMIDIcodeToNote(code));
 
         state.update(down, code);
         state.draw();
+    };
+
+    function onKeyboard(down: boolean, charCode : number ){
+        const fakeNote = state.keyPressToCode(charCode);
+        if( fakeNote !== -1 ){
+            onKey(down, fakeNote);
+        }
     };
 
     window.onresize = function(e : UIEvent) {

@@ -41,8 +41,6 @@ module Sheet {
     const isBassCode = (code: MIDI.Note) => code < 60;
     const codesToNotes = (v: MIDI.Note[]) => v.map((x: MIDI.Note) => Sheet.codeToNote(x));
 
-    const TRANSPARENT_COLOR = 'rgba(0,0,0,0)';
-
     let ctx: any = null;
     let staveTreble: any = null;
     let staveBass: any = null;
@@ -81,11 +79,11 @@ module Sheet {
     };
 
     export function colorNote(staveNote: any, color: string){
-        staveNote.setStyle({ strokeStyle: color, fillStyle: color });
+        staveNote.setStyle({ stemStyle: color, strokeStyle: color, fillStyle: color });
     };
 
     export function colorSingleNote(index: number, staveNote: any, color: string) {
-        staveNote.setKeyStyle(index, { strokeStyle: color, fillStyle: color });
+        staveNote.setKeyStyle(index, { stemStyle : color, strokeStyle: color, fillStyle: color });
     };
 
     /**
@@ -234,9 +232,7 @@ module Sheet {
     };
 
     function makeInvisibleNote() {
-        const invisible = new Vex.Flow.StaveNote({ keys: ['e/4'], duration: 'q' });
-        invisible.setStyle({ strokeStyle: TRANSPARENT_COLOR, fillStyle: TRANSPARENT_COLOR });
-        return invisible;
+        return new Vex.Flow.GhostNote({ duration: 'q' });
     };
 
     /** pre {codes} is sorted */
