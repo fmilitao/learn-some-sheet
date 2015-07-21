@@ -1,3 +1,4 @@
+/// <reference path="../lib/d3.d.ts" />
 
 module Game {
 
@@ -252,12 +253,27 @@ window.onload = function(){
 
 
     function onMIDIFailure() {
-        const msg = document.getElementById('message');
-        msg.innerHTML = ('<b>Error:</b> No access to MIDI devices. '+
-            'You may need to restart your browser to allow access. '+
-            'Or your browser does not support the WebMIDI API.');
-        msg.className += 'error';
-        msg.style.display = 'block';
+        // show small pop-up warning then remove it.
+        const m = d3.select("body")
+            .append("div")
+            .style("left", "10%")
+            .style("right", "10%")
+            .style("bottom", "-200px")
+            .style("display", "block")
+            .style("opacity", 1)
+            .attr("class", 'error')
+            .html( '<b>Error:</b> No access to MIDI devices. ' +
+                'You may need to restart your browser to allow access. ' +
+                'Or your browser does not support the WebMIDI API.' );
+
+        // FIXME: bug on the '.d.ts' forbids sequencing transitions!
+        (<any>m).transition()
+            .duration(1000)
+            .style("bottom", "0px")
+            .transition()
+            .delay(11000)
+            .style("opacity", 0)
+            .remove();
     };
 
     // note that access does not work if accessing local file.
