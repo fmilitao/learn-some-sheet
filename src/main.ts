@@ -1,5 +1,10 @@
 /// <reference path="../lib/d3.d.ts" />
 
+// constants of key codes from 'a' to 'g'
+// these are only valid for key down/up events (not key press)
+const A_CODE = 65;
+const G_CODE = 71;
+
 module Game {
 
     const WRONG_COLOR = 'red';
@@ -213,8 +218,6 @@ module Game {
             if ( letter.indexOf(key) === 0)
                 return note;
 
-            const A_CODE = 65;
-            const G_CODE = 71;
             // translates any key from 'a' to 'g' into a MIDI note on octave 4
             if( charCode >= A_CODE && charCode <= G_CODE ){
                 return MIDI.convertNoteToMIDIcode(key,4);
@@ -310,21 +313,36 @@ window.onload = function(){
     let state : Game.GameState = null;
 
     function onKey(down: boolean, code: MIDI.Note) {
-        //console.log('Key: ' + code + ' ' + down + ' >> ' + MIDI.convertMIDIcodeToNote(code));
+        console.log('Key: ' + code + ' ' + down + ' >> ' + MIDI.convertMIDIcodeToNote(code));
 
         state.update(down, code);
         state.draw();
     };
 
-    function onKeyboard(down: boolean, charCode : number ){
-        const fakeNote = state.keyPressToCode(charCode);
-        if( fakeNote !== -1 ){
-            onKey(down, fakeNote);
-        }
-    };
-
     // add keyboard mode
     if (minChord === 1 && maxChord === 1) {
+        // auxiliary state is necessary to avoid repeating keydown events.
+        let keysDown = new Array(G_CODE-A_CODE);
+        for (let i = 0; i < keysDown.length;++i){
+            keysDown[i] = false;
+        }
+
+        function onKeyboard(down: boolean, charCode: number) {
+            if( charCode >= A_CODE && charCode <= G_CODE ){
+                const i = charCode - A_CODE;
+                if( down && keysDown[i] ){
+                    // key is down and was down
+                    return;
+                }
+                keysDown[i] = down;
+            }
+
+            const fakeNote = state.keyPressToCode(charCode);
+            if (fakeNote !== -1) {
+                onKey(down, fakeNote);
+            }
+        };
+
         window.onkeydown = (e: KeyboardEvent) => onKeyboard(true, e.keyCode);
         window.onkeyup = (e: KeyboardEvent) => onKeyboard(false, e.keyCode);
 
