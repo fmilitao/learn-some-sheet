@@ -252,6 +252,9 @@ module Game {
 
 module Effects {
 
+    let g: d3.Selection<any> = null;
+    // let g_x = 0;
+
     let cursor: d3.Selection<any> = null;
     let cursor_t: d3.Transition<any> = null;
     let svg: d3.Selection<SVGElement> = null;
@@ -268,6 +271,57 @@ module Effects {
         svg.attr("height", height);
 
         W = width;
+
+        addAssist(width);
+    };
+
+    function addAssist( width : number ){
+        g = svg.append("g").attr("opacity", 1);
+        const str = ['G', 'B', 'D', 'F', 'A', 'C', 'E'];
+
+//FIXME this is hacky and ungly code with lots of magic numbers...
+        function add(w: number, yMin: number, yMax: number, i_start : number) {
+            let y = yMax;
+            for (let i = i_start; y > yMin;) {
+
+                g.append("text")
+                    .attr('x', w)
+                    .attr('y', y)
+                    .attr("font-family", "monospace")
+                    .attr("font-size", "10px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "gray")
+                    .attr("opacity", 1)
+                    .text(str[i]);
+
+                y = y - 10;
+                i = (i + 1) % str.length;
+            }
+
+            y = yMax + 5;
+
+            for (let i = i_start+3; y > yMin;) {
+
+                g.append("text")
+                    .attr('x', w + 14)
+                    .attr('y', y)
+                    .attr("font-family", "monospace")
+                    .attr("font-size", "10px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "gray")
+                    .attr("opacity", 1)
+                    .text(str[i]);
+
+                y = y - 10;
+                i = (i + 1) % str.length;
+
+            }
+        };
+
+        add(width - 60, 100, 188, 2);
+        add(width - 60, 215, 188 + 80, 3);
+
+        // g_x = width - 60;
     };
 
     export function initCursor(height : number, x : number){
@@ -292,6 +346,11 @@ module Effects {
         cursor.transition()
             .duration(250)
             .attr('x', x );
+        
+        // g.transition()
+        //     .duration(250)
+        //     .attr("transform", "translateX(" + (g_x-x) + ")");
+        // g_x = x;
     };
 
     export function curtain(onDown: () => void, onUp: () => void) {
