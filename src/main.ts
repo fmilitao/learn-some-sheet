@@ -101,7 +101,14 @@ module Game {
             this.rightB = newArray(this.sheet.notesBass[this.i].length,false);
         }
 
-        update(down: boolean, code : MIDI.Note) {
+        currentX(){
+            const note = this.sheet.treble.tickables[this.i].note_heads[0];
+            // console.log(note);
+            // console.log(note.x + ' ' + note.width);
+            return note.x - (note.width / 2); // FIXME: this yield wrong when restarting??
+        }
+
+        update(down: boolean, code : MIDI.Note) : boolean {
             const indexT = this.sheet.notesTreble[this.i].indexOf(code);
             const indexB = this.sheet.notesBass[this.i].indexOf(code);
             const isCorrect = (indexT !== -1) || (indexB !== -1);
@@ -190,15 +197,18 @@ module Game {
                     
                     this.n_correct += this.rightT.length+this.rightB.length;
                     ++this.i;
-                    if (this.i === this.sheet.stavesTreble.length) {
+                    const newSheet = (this.i === this.sheet.stavesTreble.length);
+                    if (newSheet) {
                         // sheet completed, generate new one
                         this.i = 0;
                         this.generateSheet();
                     }
                     this.rightT = newArray(this.sheet.notesTreble[this.i].length, false);
                     this.rightB = newArray(this.sheet.notesBass[this.i].length, false);
+                    return newSheet;
                 }
             }
+            return false;
         }
 
         keyPressToCode( charCode : number ) : MIDI.Note{
@@ -240,6 +250,67 @@ module Game {
 
 };
 
+module Effects {
+
+    let cursor: d3.Selection<any> = null;
+    let cursor_t: d3.Transition<any> = null;
+    let svg: d3.Selection<SVGElement> = null;
+    
+    let W: number;
+    const BOX = 30;
+
+    export function init(width: number, height: number) {
+        if (svg !== null)
+            throw 'resize svg code not ready';
+
+        svg = d3.select("svg");
+        svg.attr("width", width);
+        svg.attr("height", height);
+
+        W = width;
+    };
+
+    export function initCursor(height : number, x : number){
+        cursor = svg.append("rect")
+            .style("fill", "#a3a3a3")
+        // .style("stroke","black")
+        //   .attr("stroke-width", 2)
+            .attr("x", 0)
+            .attr("y", 0)
+            .attr("rx", 2)
+            .attr("ry", 2)
+            .attr('opacity', 0.3)
+            .attr("width", BOX)
+            .attr("height", height);
+
+        //cursor_t = 
+        cursor.transition()
+            .attr('x', x);
+    };
+
+    export function moveCursor(x : number){
+        d3.selectAll('rect').transition()
+            .duration(500)
+            .attr('x', x );
+    };
+
+    export function curtain(onDown: () => void, onUp: () => void) {
+        cursor.transition()
+            .attr('width', W)
+            .attr('opacity', 1)
+            .duration(1000)
+            .attr("x", 0)
+            .each('end',onDown)
+            .transition()
+            .delay(1000)
+            .duration(500)
+            .attr('opacity', 0.3)
+            .attr("width", BOX)
+            .each('end', onUp);
+    };
+
+};
+
 
 window.onload = function(){
 
@@ -247,7 +318,7 @@ window.onload = function(){
     let minMIDI : MIDI.Note = 48;
     let maxMIDI : MIDI.Note = 83;
     let minChord = 1;
-    let maxChord = 3;
+    let maxChord = 1; //3;
     // EZ-200 MIDI ranges: 36-96 (inclusive)
 
     // override default canvas size
@@ -314,8 +385,26 @@ window.onload = function(){
     function onKey(down: boolean, code: MIDI.Note) {
         console.log('Key: ' + code + ' ' + down + ' >> ' + MIDI.convertMIDIcodeToNote(code));
 
-        state.update(down, code);
-        state.draw();
+        const oldX = state.currentX();
+        const newSheet = state.update(down, code);
+
+        if( newSheet ){
+            Effects.curtain(
+                () => state.draw(),
+                () => Effects.moveCursor(state.currentX())
+                );
+        }else{
+            state.draw();
+            const newX = state.currentX();
+            if (oldX === newX)
+                return; // cursor unchanged
+
+            if (newX > oldX ) {
+                // move cursor to new position
+                Effects.moveCursor(newX);
+            }
+        }
+
     };
 
     // add keyboard mode
@@ -365,9 +454,10 @@ window.onload = function(){
     }
 
     window.onresize = function(e : UIEvent) {
-        const beats = 8; //TODO: dynamic beat number is messy: Sheet.calcBeats(window.innerWidth);
+        const beats = 2; //8; //TODO: dynamic beat number is messy: Sheet.calcBeats(window.innerWidth);
 
         Sheet.init(window.innerWidth,window.innerHeight,beats);
+        Effects.init(window.innerWidth, window.innerHeight);
 
         state = new Game.GameState(
             help,
@@ -378,6 +468,7 @@ window.onload = function(){
         
         // initial draw
         state.draw();
+        Effects.initCursor(window.innerHeight, state.currentX());
     }
 
     window.onresize(null);
