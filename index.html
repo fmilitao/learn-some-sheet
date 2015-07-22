@@ -7,14 +7,18 @@
     margin: 0;
     padding: 0;
     overflow: hidden;
+    background-color: #FFFFCC;
   }
 
   svg {
     position: absolute;
-    top: 0;
+    top: 5px;
     left: 0;
     z-index: 1; /* SVG on front */
 
+    border-width: 1px;
+    border-color: lightgray;
+    border-style: solid;
     /*
     border: solid gray;
     border-style: solid;
@@ -31,14 +35,28 @@
   canvas {
     /* border: solid gray; */
     /* padding: 5px; */
+
     position: absolute;
-    top: 0;
+    top: 5px;
     left: 0;
     padding: 0;
     margin: 0;
-    /* background-color: #FFFFCC; */
+
+    /*
+    padding-left: 0;
+    padding-right: 0;
+    margin-left: auto;
+    margin-right: auto;
+    */
+
+    background-color: #FFFFFF;
     /* background-image: url('???'); */
     z-index: 0;
+
+    border-color: lightgray;
+    border-style: solid;
+    border-width: 1px;
+    box-shadow: 15px 15px 30px gray;
   }
 
   .error{
@@ -49,6 +67,7 @@
     font-family: sans-serif;
     background: #FF5151;
     border: 3px solid #E93333;
+    z-index: 10;
   }
 
   .warn{
@@ -59,6 +78,7 @@
     font-family: sans-serif;
     background: #66CCFF;
     border: 3px solid #99CCFF;
+    z-index: 10;
   }
 
   #score {

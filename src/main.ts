@@ -266,6 +266,7 @@ module Effects {
         svg = d3.select("svg");
         svg.attr("width", width);
         svg.attr("height", height);
+        svg.style("left", Math.floor((window.innerWidth-width)/2) );
 
         W = width;
 
@@ -315,8 +316,8 @@ module Effects {
             }
         };
 
-        add(width - 60, 100, 188, 2);
-        add(width - 60, 215, 188 + 80, 3);
+        add(width - 60, 100 + 50, 188 + 50, 2);
+        add(width - 60, 215 + 50, 188 + 80 + 50, 3);
 
         // g_x = width - 60;
     };
@@ -407,6 +408,7 @@ window.onload = function(){
             }
         }
     }
+    // FIXME bounds sanity on min/max MIDI and Chords.
 
 
     function onMIDIFailure() {
@@ -511,10 +513,11 @@ window.onload = function(){
     }
 
     window.onresize = function(e : UIEvent) {
-        const beats = 2; //8; //TODO: dynamic beat number is messy: Sheet.calcBeats(window.innerWidth);
-
-        Sheet.init(window.innerWidth,window.innerHeight,beats);
-        Effects.init(window.innerWidth, window.innerHeight);
+        const beats = 8; //TODO: dynamic beat number is messy: Sheet.calcBeats(window.innerWidth);
+        const H = 500; // this is really the maximum height needed for a MIDI sheet
+        const W = 700; // reasonable enough for 8 beats
+        Sheet.init(W, H,beats);
+        Effects.init(W, H);
 
         state = new Game.GameState(
             help,
@@ -525,7 +528,7 @@ window.onload = function(){
         
         // initial draw
         state.draw();
-        Effects.initCursor(window.innerHeight, state.currentX());
+        Effects.initCursor(H, state.currentX());
     }
 
     window.onresize(null);

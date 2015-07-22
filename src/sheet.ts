@@ -49,7 +49,7 @@ module Sheet {
     let brace: any = null;
 
     const START = 50;
-    const TOP = 100;
+    const TOP = 150;
     const STAVE_PADDING = 80; //TODO: not quite right?
 
     export function calcBeats(width : number ){
@@ -62,6 +62,7 @@ module Sheet {
         NUM_BEATS = beats;
 
         const canvas = document.getElementsByTagName('canvas')[0];
+        canvas.style.left = Math.floor((window.innerWidth - width) / 2)+'px';
         const renderer = new Vex.Flow.Renderer(canvas, Vex.Flow.Renderer.Backends.CANVAS);
         renderer.resize(width, height);
 
