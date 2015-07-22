@@ -296,8 +296,7 @@ window.onload = function(){
                 'You may need to restart your browser to allow access. ' +
                 'Or your browser does not support the WebMIDI API.' );
 
-        // FIXME: bug on the '.d.ts' forbids sequencing transitions!
-        (<any>m).transition()
+        m.transition()
             .duration(1000)
             .style("bottom", "0px")
             .transition()
@@ -355,7 +354,7 @@ window.onload = function(){
             .attr("class", 'warn')
             .html('<b>Info:</b> Keyboard control available.');
 
-        (<any>m).transition()
+        m.transition()
             .delay(500)
             .duration(1000)
             .style("top", "0px")
@@ -366,12 +365,16 @@ window.onload = function(){
     }
 
     window.onresize = function(e : UIEvent) {
-        Sheet.init();
+        const beats = 8; //TODO: dynamic beat number is messy: Sheet.calcBeats(window.innerWidth);
+
+        Sheet.init(window.innerWidth,window.innerHeight,beats);
+
         state = new Game.GameState(
             help,
-            Sheet.NUM_BEATS, 
+            beats, 
             minChord, maxChord,
-            minMIDI, maxMIDI);
+            minMIDI, maxMIDI
+            );
         
         // initial draw
         state.draw();

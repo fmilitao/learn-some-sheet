@@ -33,13 +33,13 @@ module Sheet {
     //
 
     const TRANSPARENT_COLOR = 'rgba(0,0,0,0)';
-
-    // these are defaults to be overwritten by init()
-    export let WIDTH = 500, HEIGHT = 500;
-    export let NUM_BEATS = 8;
     const BEAT_VALUE = 4;
 
+    let NUM_BEATS = 8;
+    let clean : () => void = null;
+
     const formatter = new Vex.Flow.Formatter();
+
     const isBassCode = (code: MIDI.Note) => code < 60;
     const codesToNotes = (v: MIDI.Note[]) => v.map((x: MIDI.Note) => Sheet.codeToNote(x));
 
@@ -48,30 +48,36 @@ module Sheet {
     let staveBass: any = null;
     let brace: any = null;
 
-    export function init() {
-        WIDTH = window.innerWidth;
-        HEIGHT = window.innerHeight;
+    const START = 50;
+    const TOP = 100;
+    const STAVE_PADDING = 80; //TODO: not quite right?
+
+    export function calcBeats(width : number ){
+        let tmp = Math.floor((width - START * 4) / 40);
+        tmp = Math.min(tmp, 10); //TODO: one note is off screen if more than 10?
+        return Math.max(tmp, 1);
+    };
+
+    export function init(width : number, height : number, beats : number) {
+        NUM_BEATS = beats;
 
         const canvas = document.getElementsByTagName('canvas')[0];
         const renderer = new Vex.Flow.Renderer(canvas, Vex.Flow.Renderer.Backends.CANVAS);
-        renderer.resize(WIDTH, HEIGHT);
+        renderer.resize(width, height);
 
         ctx = renderer.getContext();
         //ctx.scale(2, 2);
 
-        const START = 50;
-        const TOP = 100;
-        const STAVE_PADDING = 80; //TODO: not quite right?
+        clean = function(){
+            // clean previously drawn canvas
+            ctx.clearRect(0, 0, width, height);
+        };
 
-        NUM_BEATS = Math.floor((WIDTH - START*4) / 40);
-        NUM_BEATS = Math.min(NUM_BEATS, 10); //TODO: one note is off screen if more than 10?
-        NUM_BEATS = Math.max(NUM_BEATS, 1);
-
-        staveTreble = new Vex.Flow.Stave(START, TOP, WIDTH - START*2);
+        staveTreble = new Vex.Flow.Stave(START, TOP, width - START * 2);
         staveTreble.addClef('treble');
         staveTreble.setContext(ctx);
 
-        staveBass = new Vex.Flow.Stave(START, TOP+STAVE_PADDING, WIDTH - START*2);
+        staveBass = new Vex.Flow.Stave(START, TOP + STAVE_PADDING, width - START * 2);
         staveBass.addClef('bass');
         staveBass.setContext(ctx);
 
@@ -199,8 +205,7 @@ module Sheet {
     };
 
     export function draw(treble : Voice[], bass: Voice[]){
-        // clean previously drawn canvas
-        ctx.clearRect(0, 0, WIDTH, HEIGHT);
+        clean();
 
         staveBass.draw();
         staveTreble.draw();
