@@ -289,8 +289,8 @@ module Effects {
     };
 
     export function moveCursor(x : number){
-        d3.selectAll('rect').transition()
-            .duration(500)
+        cursor.transition()
+            .duration(250)
             .attr('x', x );
     };
 
@@ -298,11 +298,11 @@ module Effects {
         cursor.transition()
             .attr('width', W)
             .attr('opacity', 1)
-            .duration(1000)
+            .duration(500)
             .attr("x", 0)
             .each('end',onDown)
             .transition()
-            .delay(1000)
+            .delay(500)
             .duration(500)
             .attr('opacity', 0.3)
             .attr("width", BOX)
@@ -454,7 +454,7 @@ window.onload = function(){
     }
 
     window.onresize = function(e : UIEvent) {
-        const beats = 2; //8; //TODO: dynamic beat number is messy: Sheet.calcBeats(window.innerWidth);
+        const beats = 8; //TODO: dynamic beat number is messy: Sheet.calcBeats(window.innerWidth);
 
         Sheet.init(window.innerWidth,window.innerHeight,beats);
         Effects.init(window.innerWidth, window.innerHeight);
