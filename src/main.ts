@@ -64,7 +64,7 @@ module Game {
         private pending: number;
         private i: number; // current notes[i] index.
 
-        private generateSheet: () => void;
+        public generateSheet: () => void;
 
         // stats
         private n_correct: number;
@@ -91,14 +91,14 @@ module Game {
                 this.sheet = Sheet.buildNotes(assist,
                     makeRandomNotes(count, minChord, maxChord, minMIDI, maxMIDI)
                     );
+                this.i = 0;
+                this.pending = 0;
+                this.wrong = [];
+                this.rightT = newArray(this.sheet.notesTreble[this.i].length,false);
+                this.rightB = newArray(this.sheet.notesBass[this.i].length,false);
             };
-            this.generateSheet();
 
-            this.i = 0;
-            this.pending = 0;
-            this.wrong = [];
-            this.rightT = newArray(this.sheet.notesTreble[this.i].length,false);
-            this.rightB = newArray(this.sheet.notesBass[this.i].length,false);
+            this.generateSheet();
         }
 
         currentX(){
@@ -196,16 +196,13 @@ module Game {
                     }
                     
                     this.n_correct += this.rightT.length+this.rightB.length;
-                    ++this.i;
-                    const newSheet = (this.i === this.sheet.stavesTreble.length);
-                    if (newSheet) {
+                    if (this.i === (this.sheet.stavesTreble.length-1)) {
                         // sheet completed, generate new one
-                        this.i = 0;
-                        this.generateSheet();
+                        return true;
                     }
+                    ++this.i;
                     this.rightT = newArray(this.sheet.notesTreble[this.i].length, false);
                     this.rightB = newArray(this.sheet.notesBass[this.i].length, false);
-                    return newSheet;
                 }
             }
             return false;
@@ -290,7 +287,7 @@ module Effects {
                     .attr("font-family", "monospace")
                     .attr("font-size", "10px")
                     .attr("font-weight", "bold")
-                    .attr("fill", "gray")
+                    .attr("fill", "blue")
                     .attr("opacity", 1)
                     .text(str[i]);
 
@@ -308,7 +305,7 @@ module Effects {
                     .attr("font-family", "monospace")
                     .attr("font-size", "10px")
                     .attr("font-weight", "bold")
-                    .attr("fill", "gray")
+                    .attr("fill", "blue")
                     .attr("opacity", 1)
                     .text(str[i]);
 
@@ -446,14 +443,15 @@ window.onload = function(){
 
         const oldX = state.currentX();
         const newSheet = state.update(down, code);
+        state.draw()
 
         if( newSheet ){
+            state.generateSheet();
             Effects.curtain(
                 () => state.draw(),
                 () => Effects.moveCursor(state.currentX())
                 );
         }else{
-            state.draw();
             const newX = state.currentX();
             if (oldX === newX)
                 return; // cursor unchanged
@@ -513,7 +511,7 @@ window.onload = function(){
     }
 
     window.onresize = function(e : UIEvent) {
-        const beats = 8; //TODO: dynamic beat number is messy: Sheet.calcBeats(window.innerWidth);
+        const beats = 2; //8; //TODO: dynamic beat number is messy: Sheet.calcBeats(window.innerWidth);
 
         Sheet.init(window.innerWidth,window.innerHeight,beats);
         Effects.init(window.innerWidth, window.innerHeight);
