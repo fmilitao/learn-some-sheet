@@ -424,10 +424,10 @@ module Stats {
 
         let svg = d3.select("#note-stat");
 
-        const arc: any = d3.svg.arc() //FIXME !!
-            .innerRadius(15)
-            .outerRadius(40)
-            .startAngle(0);
+        const arc: d3.svg.Arc<any> = d3.svg.arc()
+                .innerRadius(15)
+                .outerRadius(40)
+                .startAngle(0);
 
         svg = svg.append("g")
                 .attr("transform", "translate(" + width / 2 + "," + (15 + (height / 2)) + ")")
@@ -446,11 +446,12 @@ module Stats {
             .style("stroke-width", 4)
             .attr("d", arc);
 
-        arcTween = function(transition: any, newAngle: number) {
-            transition.attrTween("d", function(d: any) {
+        arcTween = function(transition: d3.Transition<any>, newAngle: number) {
+            // FIXME!
+            (<any>transition).attrTween("d", function(d: any) {
                 const interpolate = d3.interpolate(d.endAngle, newAngle);
 
-                return function(t: any) {
+                return function(t: number) {
                     d.endAngle = interpolate(t);
                     return arc(d);
                 };
@@ -738,18 +739,18 @@ window.onload = function(){
             .remove();
     }
 
+    const beats = 8; //TODO: dynamic beat number is messy: Sheet.calcBeats(window.innerWidth);
+    
+    const H = 500; // this is really the maximum height needed for a MIDI sheet
+    const W = 700; // reasonable enough for 8 beats
+
     let oldTimer : number = null;
-    //FIXME: using resize like this is bad... separate UI resize from gamestate resize. we no longer use dynamic beats length
     window.onresize = function(e: UIEvent) {
-        const beats = 8; //TODO: dynamic beat number is messy: Sheet.calcBeats(window.innerWidth);
-        
-        const H = 500; // this is really the maximum height needed for a MIDI sheet
-        const W = 700; // reasonable enough for 8 beats
-        
         Sheet.init(W, H, beats);
         Effects.init(W, H, help);
         Stats.init();
-
+        
+        // FIXME move this out, but generate sheet requires Sheet.init !!
         state = new Game.GameState(
             // note help only draws correctly if there is only one note per beat
             // thus, disabled for every other condition
@@ -758,8 +759,8 @@ window.onload = function(){
             minChord, maxChord,
             minMIDI, maxMIDI
             );
-        
-        // initial draw
+
+        // initial (re)draw
         state.draw();
         Effects.initCursor(H, state.currentX());
 

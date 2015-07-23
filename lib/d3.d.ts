@@ -2360,7 +2360,7 @@ declare module d3 {
         }
 
         interface Arc<T> {
-            (d: T, i: number): string;
+            (d: T, i?: number): string; //FIXME i is optional
 
             innerRadius(): (d: T, i: number) => number;
             innerRadius(radius: number): Arc<T>;
