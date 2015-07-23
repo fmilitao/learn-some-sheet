@@ -59,7 +59,6 @@ var Game;
                 this.rightB = newArray(this.sheet.notesBass[this.i].length, false);
                 this.timer = new Date().getTime();
             };
-            this.generateSheet();
         }
         GameState.prototype.currentX = function () {
             var note = this.sheet.treble.tickables[this.i].note_heads[0];
@@ -172,6 +171,10 @@ var Game;
             return -1;
         };
         GameState.prototype.draw = function () {
+            if (!this.sheet) {
+                Sheet.draw([], []);
+                return;
+            }
             var _a = Sheet.buildKeyStatus(this.i, WRONG_COLOR, this.wrong), t = _a.treble, b = _a.bass;
             Sheet.draw([this.sheet.treble, t], [this.sheet.bass, b]);
             Stats.setNotes(this.n_correct, this.n_wrong);
@@ -198,7 +201,7 @@ var Effects;
     var cursor = null;
     var cursor_t = null;
     var svg = null;
-    var W;
+    var W = -1;
     var BOX = 30;
     function init(width, height, help) {
         if (svg === null) {
@@ -207,17 +210,14 @@ var Effects;
         svg.attr("width", width);
         svg.attr("height", height);
         svg.style("left", Math.floor((window.innerWidth - width) / 2));
-        W = width;
-        if (help) {
+        if (g === null) {
             addAssist(width);
         }
+        W = width;
     }
     Effects.init = init;
     ;
     function addAssist(width) {
-        if (g !== null) {
-            g.remove();
-        }
         g = svg.append("g").attr("opacity", 1);
         var str = ['G', 'B', 'D', 'F', 'A', 'C', 'E'];
         function add(w, yMin, yMax, i_start) {
@@ -576,22 +576,24 @@ window.onload = function () {
             .style("opacity", 0)
             .remove();
     }
+    var beats = 8;
+    var H = 500;
+    var W = 700;
+    state = new Game.GameState(help && minChord === 1 && maxChord === 1, beats, minChord, maxChord, minMIDI, maxMIDI);
     var oldTimer = null;
     window.onresize = function (e) {
-        var beats = 8;
-        var H = 500;
-        var W = 700;
         Sheet.init(W, H, beats);
         Effects.init(W, H, help);
         Stats.init();
-        state = new Game.GameState(help && minChord === 1 && maxChord === 1, beats, minChord, maxChord, minMIDI, maxMIDI);
         state.draw();
-        Effects.initCursor(H, state.currentX());
         if (oldTimer !== null) {
             clearInterval(oldTimer);
         }
         oldTimer = setInterval(function () { return Stats.setCurrentTime(new Date().getTime() - state.getStartTime()); }, 100);
     };
     window.onresize(null);
+    state.generateSheet();
+    state.draw();
+    Effects.initCursor(H, state.currentX());
 };
 //# sourceMappingURL=main.js.map
