@@ -1,6 +1,4 @@
 /// <reference path="../lib/d3.d.ts" />
-
-
 var A_CODE = 65;
 var G_CODE = 71;
 var Game;
