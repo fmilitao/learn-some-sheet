@@ -7,10 +7,10 @@
     margin: 0;
     padding: 0;
     overflow: hidden;
-    background-color: #FFFFCC;
+    background-color: #d3d3d3;
   }
 
-  svg {
+  #d3-layer {
     position: absolute;
     top: 5px;
     left: 0;
@@ -68,9 +68,11 @@
     background: #FF5151;
     border: 3px solid #E93333;
     z-index: 10;
+    max-width: 50%;
   }
 
   .warn{
+    max-width: 50%;
     position: absolute;
     border-radius: 10px;
     margin: 5px;
@@ -109,6 +111,59 @@
     font-family: monospace;
   } */
 
+
+#time-state{
+  padding: 5px;
+}
+
+#note-stat {
+    padding: 15px;
+  }
+
+  .bad{
+    stroke: #FF4136;
+    fill: #DA3E52;
+  rx: 2;
+    ry: 2;
+    stroke-width: 2;
+  }
+
+  .good{
+    fill: #2ECC40;
+    stroke: #8FD5A6;
+    rx: 2;
+    ry: 2;
+    stroke-width: 2;
+  }
+
+  .ok{
+    stroke: #FFC857;
+    fill: #F39237;
+    rx: 2;
+    ry: 2;
+    stroke-width: 2;
+  }
+
+  .blo {
+  display: inline-block;
+  font-family: sans-serif;
+  }
+
+    .right  {text-align:right; font-weight: bold; padding-left: 5px;}
+
+    .mydiv {
+      position: absolute;
+      bottom: 0;
+      display: inline-block;
+      margin-left: 5px;
+      margin-right: 5px;
+      border: solid black;
+    }
+
+    th {
+      text-align: left;
+    }
+
 </style>
 <script src='lib/d3.min.js'></script>
 <script src='lib/vexflow-min.js'></script>
@@ -117,8 +172,37 @@
 <script src='bin/main.js'></script>
 </head>
 <body>
-  <div id='score'>?</div>
-  <svg id='d3-svg' xmlns="http://www.w3.org/2000/svg" version="1.1"></svg>
+  <!-- <div id='score'>?</div> -->
+  <svg id='d3-layer' xmlns="http://www.w3.org/2000/svg" version="1.1"></svg>
   <canvas>Canvas Error.</canvas>
+
+  <div class="mydiv" style="left:0">
+    <svg id='time-stat' xmlns="http://www.w3.org/2000/svg" version="1.1" width='220' height='70'></svg>
+    <div class='blo'>
+      <table style="width:100%">
+        <col align="left">
+        <col align="right">
+        <th>Time</th>
+        <tr><td>Current:</td><td class="right" id='current-time'> 123</td></tr>
+      <tr><td>Last:</td><td class="right" id='last-time'> 13</td></tr>
+      <tr><td>Average:</td><td class="right" id='average-time'> 23</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="mydiv" style="right:0">
+    <svg id='note-stat' xmlns="http://www.w3.org/2000/svg" version="1.1" width='100' height='70'></svg>
+    <div class='blo'>
+      <table style="width:100%">
+        <col align="left">
+        <col align="right">
+        <th>Notes</th>
+        <tr><td>Correct:</td><td class="right" id='correct-notes'> 56</td></tr>
+      <tr><td>Wrong:</td><td class="right" id='wrong-notes'> 12</td></tr>
+      <tr><td>Total:</td><td class="right" id='total-notes'> 76</td></tr>
+      </table>
+    </div>
+  </div>
+
 </body>
 </html>

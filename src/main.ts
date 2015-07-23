@@ -237,10 +237,19 @@ module Game {
             const {treble: t, bass: b} = Sheet.buildKeyStatus(this.i, WRONG_COLOR, this.wrong);
             Sheet.draw( [this.sheet.treble,t],  [this.sheet.bass,b] );
 
-            this.score.innerHTML =
-                'score: '+this.n_correct+'/'+(this.n_correct+this.n_wrong)+
-                ' [sheet='+Math.floor(this.i/this.sheet.notesTreble.length*100)+'%,'+
-                ' accuracy='+Math.floor(this.n_correct/(this.n_correct+this.n_wrong)*100)+'%]';
+            document.getElementById('correct-notes').innerHTML = this.n_correct+'';
+            document.getElementById('wrong-notes').innerHTML = this.n_wrong + '';
+            document.getElementById('total-notes').innerHTML = (this.n_correct + this.n_wrong) + '';
+            
+
+            document.getElementById('current-time').innerHTML = -1 + '';
+            document.getElementById('last-time').innerHTML = -1 + '';
+            document.getElementById('average-time').innerHTML = -1 + '';
+
+            // this.score.innerHTML =
+            //     'score: '+this.n_correct+'/'+(this.n_correct+this.n_wrong)+
+            //     ' [sheet='+Math.floor(this.i/this.sheet.notesTreble.length*100)+'%,'+
+            //     ' accuracy='+Math.floor(this.n_correct/(this.n_correct+this.n_wrong)*100)+'%]';
         }
 
     };
@@ -263,7 +272,7 @@ module Effects {
         if (svg !== null)
             throw 'resize svg code not ready';
 
-        svg = d3.select("svg");
+        svg = d3.select("#d3-layer");
         svg.attr("width", width);
         svg.attr("height", height);
         svg.style("left", Math.floor((window.innerWidth-width)/2) );
@@ -368,6 +377,158 @@ module Effects {
 
 };
 
+// FIXME: lots of missing types!
+module Stats {
+
+    let line: any = null;
+    let newBar: any = null;
+    let MAX: number = 0;
+    let rs: any[] = [];
+    let arcTween: any = null;
+    let foreground: any = null;
+    const width = 100,
+        height = 50,
+        tau = 2 * Math.PI;
+
+    export function init(){
+        //
+        // PIE
+        //
+
+        // from: // http://bl.ocks.org/mbostock/5100636
+        let svg = d3.select("#note-stat");
+
+        const arc : any = d3.svg.arc()
+            .innerRadius(15)
+            .outerRadius(40)
+            .startAngle(0);
+
+        svg = svg.append("g")
+                .attr("transform", "translate(" + width / 2 + "," + (15 + (height / 2)) + ")")
+
+        const background = svg.append("path")
+            .datum({ endAngle: tau })
+            .style("fill", "#DA3E52")
+            .attr('opacity', 0.5)
+            .attr("d", arc);
+
+        // Add the foreground arc in orange, currently showing 12.7%.
+        foreground = svg.append("path")
+            .datum({ endAngle: .0 * tau })
+            .style("fill", "#2ECC40")
+            .style("stroke", "#8FD5A6")
+            .style("stroke-width", 4)
+            .attr("d", arc);
+
+
+        arcTween = function(transition: any, newAngle: number) {
+            transition.attrTween("d", function(d: any) {
+                const interpolate = d3.interpolate(d.endAngle, newAngle);
+
+                return function(t: any) {
+                    d.endAngle = interpolate(t);
+                    return arc(d);
+                };
+            });
+        };
+
+        //
+        // BARS
+        //
+
+        const data = [30, 29, 28, 25, 10, 0, 0, 0, 0, 0];
+        MAX = data.length;
+
+        const tmp = d3.select("#time-stat");
+        const layer1 = tmp.append('g');
+        const layer2 = tmp.append('g');
+        const layer3 = tmp.append('g');
+
+        rs = [];
+
+        newBar = function(val: any) {
+            return layer1.append("rect")
+            //.style("fill","#a3c3a3")
+                .attr("class", val > 40 ? 'bad' : val > 20 ? 'ok' : 'good')
+                .attr("width", 20);
+        };
+
+        // init
+        function init() {
+            for (let i = 0; i < data.length; ++i) {
+                rs.push(newBar(50 - data[i])
+                    .attr('opacity', 1)
+                    .attr("x", 10 + (i * 20))
+                    .attr("y", (50 + 10) - (50 - data[i]))
+                    .attr("height", 50 - data[i]));
+            }
+        };
+
+
+        line = layer2.append("line")          // attach a line
+            .style("stroke", "black")  // colour the line
+            .style("stroke-width", 1)
+            .attr("x1", 10 - 2)     // x position of the first end of the line
+            .attr("y1", 50 + 10)      // y position of the first end of the line
+            .attr("x2", 20 * (data.length) + 10 + 2)     // x position of the second end of the line
+            .attr("y2", 50 + 10);
+
+        const bar = layer2.append("line")          // attach a line
+            .style("stroke", "blue")  // colour the line
+            .style("stroke-width", 1)
+            .attr("x1", 10 - 2)     // x position of the first end of the line
+            .attr("y1", 20)      // y position of the first end of the line
+            .attr("x2", 20 * (data.length) + 10 + 2)     // x position of the second end of the line
+            .attr("y2", 20); 
+
+        init();
+    };
+
+    export function update(){
+        // pie update
+        const p = Math.random() * tau;
+        foreground.transition()
+            .duration(1000)
+            .ease('bounce')
+            .call(arcTween, p);
+
+        // bar update
+        // push new value
+        function add(value : any) {
+            for (var i = 0; i < MAX; ++i) {
+                if (i === 0) {
+                    rs[i].transition()
+                    //.duration(1000)
+                        .attr("x", 10 + ((i - 1) * 20))
+                        .attr('opacity', 0)
+                        .remove();
+                } else {
+                    rs[i].transition()
+                    //.duration(200)
+                        .attr("x", 10 + ((i - 1) * 20));
+                }
+            }
+
+            rs = rs.splice(1, rs.length);
+
+            var tmp = 50 - value;
+            var n = newBar(tmp)
+                .attr("x", 10 + ((rs.length + 1) * 20))
+                .attr("y", (50 + 10) - tmp)
+                .attr('opacity', 0)
+                .attr("height", tmp);
+
+            n.transition()
+                .attr('opacity', 1)
+                .attr("x", 10 + ((rs.length) * 20));
+
+            rs.push(n);
+        };
+
+    };
+
+};
+
 
 window.onload = function(){
 
@@ -415,9 +576,9 @@ window.onload = function(){
         // show small pop-up warning then remove it.
         const m = d3.select("body")
             .append("div")
-            .style("left", "10%")
-            .style("right", "10%")
-            .style("bottom", "-200px")
+            .style("left", "0")
+            //.style("right", "10%")
+            .style("top", "-200px")
             .style("display", "block")
             .style("opacity", 1)
             .attr("class", 'error')
@@ -427,7 +588,7 @@ window.onload = function(){
 
         m.transition()
             .duration(1000)
-            .style("bottom", "0px")
+            .style("top", "0px")
             .transition()
             .delay(11000)
             .style("opacity", 0)
@@ -518,6 +679,7 @@ window.onload = function(){
         const W = 700; // reasonable enough for 8 beats
         Sheet.init(W, H,beats);
         Effects.init(W, H);
+        Stats.init();
 
         state = new Game.GameState(
             help,
