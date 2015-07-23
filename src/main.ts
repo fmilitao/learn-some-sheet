@@ -239,6 +239,10 @@ module Game {
         }
 
         draw(){
+            if( !this.sheet ){
+                Sheet.draw([], []);
+                return;
+            }
             const {treble: t, bass: b} = Sheet.buildKeyStatus(this.i, WRONG_COLOR, this.wrong);
             Sheet.draw( [this.sheet.treble,t],  [this.sheet.bass,b] );
 
@@ -268,7 +272,7 @@ module Effects {
     let cursor_t: d3.Transition<any> = null;
     let svg: d3.Selection<SVGElement> = null;
     
-    let W: number;
+    let W: number = -1;
     const BOX = 30;
 
     export function init(width: number, height: number, help : boolean) {
@@ -280,23 +284,20 @@ module Effects {
         svg.attr("height", height);
         svg.style("left", Math.floor((window.innerWidth-width)/2) );
 
-        W = width;
-
-        if( help ){
+        if( g === null ){
             addAssist(width);
         }
+        // else assumed resize, nothing else needs to change
+
+        W = width;
     };
 
     function addAssist( width : number ){
-        if( g !== null ){
-            // remove before adding new stuff.
-            g.remove(); //FIXME if resized then it will be well above curtain!!
-        }
 
         g = svg.append("g").attr("opacity", 1);
         const str = ['G', 'B', 'D', 'F', 'A', 'C', 'E'];
 
-//FIXME this is hacky and ungly code with lots of magic numbers...
+        //FIXME this is hacky and ungly code with lots of magic numbers...
         function add(w: number, yMin: number, yMax: number, i_start : number) {
             let y = yMax;
             for (let i = i_start; y > yMin;) {
@@ -354,7 +355,6 @@ module Effects {
             .attr("width", BOX)
             .attr("height", height);
 
-        //cursor_t = 
         cursor.transition()
             .attr('x', x);
     };
@@ -363,11 +363,6 @@ module Effects {
         cursor.transition()
             .duration(250)
             .attr('x', x );
-        
-        // g.transition()
-        //     .duration(250)
-        //     .attr("transform", "translateX(" + (g_x-x) + ")");
-        // g_x = x;
     };
 
     export function curtain(onDown: () => void, onUp: () => void) {
@@ -737,7 +732,7 @@ window.onload = function(){
             .remove();
     }
 
-    const beats = 8; //TODO: dynamic beat number is messy: Sheet.calcBeats(window.innerWidth);
+    const beats = 8;
     const H = 500; // this is really the maximum height needed for a MIDI sheet
     const W = 700; // reasonable enough for 8 beats
 
@@ -756,12 +751,7 @@ window.onload = function(){
         Effects.init(W, H, help);
         Stats.init();
 
-        //FIXME: only after Sheet.init():
-        state.generateSheet();
-        
-        // initial (re)draw
-        state.draw();
-        Effects.initCursor(H, state.currentX());
+        state.draw(); // initial (re)draw
 
         // timer for current running time
         if (oldTimer !== null) {
@@ -771,5 +761,9 @@ window.onload = function(){
     };
 
     window.onresize(null);
+
+    state.generateSheet();
+    state.draw();
+    Effects.initCursor(H, state.currentX());
 
 };

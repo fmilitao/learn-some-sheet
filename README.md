@@ -11,4 +11,6 @@ URL parameters:
 
 Example: `?help=true&minMIDI=60&maxChord=2`
 
+[(default mode)](http://fmilitao.github.io/learn-some-sheet/)
+
 [LINK](http://fmilitao.github.io/learn-some-sheet/)

@@ -50,9 +50,11 @@ module Sheet {
 
     const START = 50;
     const TOP = 150;
-    const STAVE_PADDING = 80; //TODO: not quite right?
+    const STAVE_PADDING = 80; //TODO: not quite right? C4 is not on the same pos. on both staves
 
     // this doesn't work well...
+    // using a dynamic beat number is messy as some notes appear off screen and
+    // it does not appear to use the maximum compactness for the sheet.
     export function calcBeats(width : number ){
         let tmp = Math.floor((width - START * 4) / 40);
         tmp = Math.min(tmp, 10); //TODO: one note is off screen if more than 10?
