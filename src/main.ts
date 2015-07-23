@@ -199,7 +199,7 @@ module Game {
                     
                     this.n_correct += this.rightT.length+this.rightB.length;
                     const diff = new Date().getTime() - this.timer;
-                    Stats.updateBar(diff); //FIXME
+                    Stats.updateBar(diff); //FIXME this looks like an ugly hack in the middle of this code
 
                     if (this.i === (this.sheet.stavesTreble.length-1)) {
                         // sheet completed, generate new one
@@ -215,7 +215,7 @@ module Game {
             return false;
         }
 
-        keyPressToCode( charCode : number ) : MIDI.Note{
+        keyPressToCode( charCode : number ) : MIDI.Note {
             const treble = this.sheet.notesTreble[this.i].length;
             const bass = this.sheet.notesBass[this.i].length;
             
@@ -249,19 +249,6 @@ module Game {
             if (p >= 0 && p <= 1) {
                 Stats.updatePie(this.n_correct / (this.n_correct + this.n_wrong));
             }
-            // document.getElementById('correct-notes').innerHTML = this.n_correct+'';
-            // document.getElementById('wrong-notes').innerHTML = this.n_wrong + '';
-            // document.getElementById('total-notes').innerHTML = (this.n_correct + this.n_wrong) + '';
-            
-
-            // document.getElementById('current-time').innerHTML = -1 + '';
-            // document.getElementById('last-time').innerHTML = -1 + '';
-            // document.getElementById('average-time').innerHTML = -1 + '';
-
-            // this.score.innerHTML =
-            //     'score: '+this.n_correct+'/'+(this.n_correct+this.n_wrong)+
-            //     ' [sheet='+Math.floor(this.i/this.sheet.notesTreble.length*100)+'%,'+
-            //     ' accuracy='+Math.floor(this.n_correct/(this.n_correct+this.n_wrong)*100)+'%]';
         }
 
         getStartTime(){
@@ -279,8 +266,6 @@ module Game {
 module Effects {
 
     let g: d3.Selection<any> = null;
-    // let g_x = 0;
-
     let cursor: d3.Selection<any> = null;
     let cursor_t: d3.Transition<any> = null;
     let svg: d3.Selection<SVGElement> = null;
@@ -288,7 +273,7 @@ module Effects {
     let W: number;
     const BOX = 30;
 
-    export function init(width: number, height: number) {
+    export function init(width: number, height: number, help : boolean) {
         if (svg !== null)
             throw 'resize svg code not ready';
 
@@ -299,7 +284,9 @@ module Effects {
 
         W = width;
 
-        addAssist(width);
+        if( help ){
+            addAssist(width);
+        }
     };
 
     function addAssist( width : number ){
@@ -347,8 +334,6 @@ module Effects {
 
         add(width - 60, 100 + 50, 188 + 50, 2);
         add(width - 60, 215 + 50, 188 + 80 + 50, 3);
-
-        // g_x = width - 60;
     };
 
     export function initCursor(height : number, x : number){
@@ -408,9 +393,9 @@ module Stats {
     let arcTween: any = null;
 
     let bar: d3.Selection<any> = null;
-    let newBar: any = null;
+    let newBar: (n:number) => d3.Selection<any> = null;
     let MAX: number = 0;
-    let rs: any[] = [];
+    let rs: d3.Selection<any>[] = [];
 
 
     let correct_notes: HTMLElement = null;
@@ -420,6 +405,9 @@ module Stats {
     let last_time: HTMLElement = null;
     let average_time: HTMLElement = null;
 
+    let count = 0;
+    let n_count = 0;
+
     export function init(){
         //
         // PIE
@@ -427,7 +415,7 @@ module Stats {
 
         let svg = d3.select("#note-stat");
 
-        const arc  : any = d3.svg.arc() //FIXME !!
+        const arc: any = d3.svg.arc() //FIXME !!
             .innerRadius(15)
             .outerRadius(40)
             .startAngle(0);
@@ -449,7 +437,6 @@ module Stats {
             .style("stroke-width", 4)
             .attr("d", arc);
 
-
         arcTween = function(transition: any, newAngle: number) {
             transition.attrTween("d", function(d: any) {
                 const interpolate = d3.interpolate(d.endAngle, newAngle);
@@ -465,7 +452,10 @@ module Stats {
         // BARS
         //
 
-        const data = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0].map(x => 50 -x);
+        const data = new Array(10);
+        for (let i = 0; i < data.length;++i){
+            data[i] = 50;
+        }
         MAX = data.length;
 
         const tmp = d3.select("#time-stat");
@@ -475,7 +465,7 @@ module Stats {
 
         rs = [];
 
-        newBar = function(val: any) {
+        newBar = function(val: number) : d3.Selection<any> {
             return layer1.append("rect")
             //.style("fill","#a3c3a3")
                 .attr("class", val > 40 ? 'bad' : val > 20 ? 'ok' : 'good')
@@ -490,7 +480,6 @@ module Stats {
                 .attr("y", (50 + 10) - (50 - data[i]))
                 .attr("height", 50 - data[i]));
         }
-
 
         const line = layer2.append("line")
             .style("stroke", "black")
@@ -515,6 +504,9 @@ module Stats {
         current_time = document.getElementById('current-time');
         last_time = document.getElementById('last-time');
         average_time = document.getElementById('average-time');
+
+        count = 0;
+        n_count = 0;
     };
 
     export function setNotes( correct : number, wrong : number) {
@@ -531,35 +523,29 @@ module Stats {
             .call(arcTween, perc * tau);
     };
 
-    export function setCurrent( time : number ){
+    export function setCurrentTime( time : number ){
         current_time.innerHTML = (time/1000).toFixed(1) + '';
     };
 
-    let count = 0;
-    let n_count = 0;
     export function updateBar( ms : number ){
+        // FIXME: this code is a huger mess, filled with magic values and empirical values...
         const s = ms / 1000;
         const value = 50-Math.min(Math.floor(s*10),50);
 
         count += s;
         n_count += 1;
 
-        console.log(count);
-        console.log(n_count);
         //
         let avg = (count / n_count);
         last_time.innerHTML = s.toFixed(1) + '';
-        average_time.innerHTML = avg.toFixed(1) + ''
-        // FIXME
+        average_time.innerHTML = avg.toFixed(1) + '';
 
         avg = Math.min(Math.floor(avg * 10), 50);
         bar.transition()
             .attr('y1', (50 + 10) - avg)
             .attr("y2", (50 + 10) - avg);
 
-        console.log(ms + ' ' + value);
-
-        for (var i = 0; i < MAX; ++i) {
+        for (let i = 0; i < MAX; ++i) {
             if (i === 0) {
                 rs[i].transition()
                 //.duration(1000)
@@ -575,8 +561,8 @@ module Stats {
 
         rs = rs.splice(1, rs.length);
 
-        var tmp = 50 - value;
-        var n = newBar(tmp)
+        const tmp = 50 - value;
+        const n = newBar(tmp)
             .attr("x", 10 + ((rs.length + 1) * 20))
             .attr("y", (50 + 10) - tmp)
             .attr('opacity', 0)
@@ -631,8 +617,17 @@ window.onload = function(){
             }
         }
     }
-    // FIXME bounds sanity on min/max MIDI and Chords.
 
+    // bounds sanity on 'minMIDI' and 'maxMIDI'
+    let min = Math.min( minMIDI, maxMIDI );
+    let max = Math.max( minMIDI, maxMIDI );
+    minMIDI = Math.max( min, 0 );
+    maxMIDI = Math.min( max, 127 );
+
+    min = Math.min(minChord, maxChord);
+    max = Math.max(minChord, maxChord);
+    minChord = Math.max( min, 1 );
+    maxChord = Math.min( max, 10 ); // 10 is assumed max fingers
 
     function onMIDIFailure() {
         // show small pop-up warning then remove it.
@@ -735,16 +730,21 @@ window.onload = function(){
             .remove();
     }
 
+    let oldTimer : number = null;
     window.onresize = function(e : UIEvent) {
         const beats = 8; //TODO: dynamic beat number is messy: Sheet.calcBeats(window.innerWidth);
+        
         const H = 500; // this is really the maximum height needed for a MIDI sheet
         const W = 700; // reasonable enough for 8 beats
+        
         Sheet.init(W, H,beats);
-        Effects.init(W, H);
+        Effects.init(W, H, help);
         Stats.init();
 
         state = new Game.GameState(
-            help,
+            // note help only draws correctly if there is only one note per beat
+            // thus, disabled for every other condition
+            help && minChord === 1 && maxChord === 1,
             beats, 
             minChord, maxChord,
             minMIDI, maxMIDI
@@ -754,7 +754,11 @@ window.onload = function(){
         state.draw();
         Effects.initCursor(H, state.currentX());
 
-        setInterval(() => Stats.setCurrent(new Date().getTime()-state.getStartTime()), 100);
+        // timer for current running time
+        if (oldTimer !== null) {
+            clearInterval(oldTimer);
+        }
+        oldTimer = setInterval(() => Stats.setCurrentTime(new Date().getTime() - state.getStartTime()), 100);
     }
 
     window.onresize(null);
