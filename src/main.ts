@@ -284,7 +284,7 @@ module Effects {
         svg.attr("height", height);
         svg.style("left", Math.floor((window.innerWidth-width)/2) );
 
-        if( g === null ){
+        if( g === null && help ){
             addAssist(width);
         }
         // else assumed resize, nothing else needs to change
