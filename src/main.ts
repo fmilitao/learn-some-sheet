@@ -70,6 +70,7 @@ module Game {
         private n_correct: number;
         private n_wrong: number;
         private score: HTMLElement;
+        private timer: number;
 
         /** 
          * @param {assist:boolean} enable note labels
@@ -96,6 +97,7 @@ module Game {
                 this.wrong = [];
                 this.rightT = newArray(this.sheet.notesTreble[this.i].length,false);
                 this.rightB = newArray(this.sheet.notesBass[this.i].length,false);
+                this.timer = new Date().getTime();
             };
 
             this.generateSheet();
@@ -196,13 +198,18 @@ module Game {
                     }
                     
                     this.n_correct += this.rightT.length+this.rightB.length;
+                    const diff = new Date().getTime() - this.timer;
+                    Stats.updateBar(diff); //FIXME
+
                     if (this.i === (this.sheet.stavesTreble.length-1)) {
                         // sheet completed, generate new one
                         return true;
                     }
                     ++this.i;
+                    this.timer = new Date().getTime();
                     this.rightT = newArray(this.sheet.notesTreble[this.i].length, false);
                     this.rightB = newArray(this.sheet.notesBass[this.i].length, false);
+
                 }
             }
             return false;
@@ -237,19 +244,32 @@ module Game {
             const {treble: t, bass: b} = Sheet.buildKeyStatus(this.i, WRONG_COLOR, this.wrong);
             Sheet.draw( [this.sheet.treble,t],  [this.sheet.bass,b] );
 
-            document.getElementById('correct-notes').innerHTML = this.n_correct+'';
-            document.getElementById('wrong-notes').innerHTML = this.n_wrong + '';
-            document.getElementById('total-notes').innerHTML = (this.n_correct + this.n_wrong) + '';
+            Stats.setNotes(this.n_correct, this.n_wrong);
+            const p = this.n_correct / (this.n_correct + this.n_wrong);
+            if (p >= 0 && p <= 1) {
+                Stats.updatePie(this.n_correct / (this.n_correct + this.n_wrong));
+            }
+            // document.getElementById('correct-notes').innerHTML = this.n_correct+'';
+            // document.getElementById('wrong-notes').innerHTML = this.n_wrong + '';
+            // document.getElementById('total-notes').innerHTML = (this.n_correct + this.n_wrong) + '';
             
 
-            document.getElementById('current-time').innerHTML = -1 + '';
-            document.getElementById('last-time').innerHTML = -1 + '';
-            document.getElementById('average-time').innerHTML = -1 + '';
+            // document.getElementById('current-time').innerHTML = -1 + '';
+            // document.getElementById('last-time').innerHTML = -1 + '';
+            // document.getElementById('average-time').innerHTML = -1 + '';
 
             // this.score.innerHTML =
             //     'score: '+this.n_correct+'/'+(this.n_correct+this.n_wrong)+
             //     ' [sheet='+Math.floor(this.i/this.sheet.notesTreble.length*100)+'%,'+
             //     ' accuracy='+Math.floor(this.n_correct/(this.n_correct+this.n_wrong)*100)+'%]';
+        }
+
+        getStartTime(){
+            return this.timer;
+        }
+
+        resetStartTime(){
+            this.timer = new Date().getTime();
         }
 
     };
@@ -379,26 +399,35 @@ module Effects {
 
 // FIXME: lots of missing types!
 module Stats {
+    // pie code adapted from:  http://bl.ocks.org/mbostock/5100636
+    const width = 100;
+    const height = 50;
+    const tau = 2 * Math.PI;
+    // pie foreground
+    let foreground: d3.Selection<any> = null;
+    let arcTween: any = null;
 
-    let line: any = null;
+    let bar: d3.Selection<any> = null;
     let newBar: any = null;
     let MAX: number = 0;
     let rs: any[] = [];
-    let arcTween: any = null;
-    let foreground: any = null;
-    const width = 100,
-        height = 50,
-        tau = 2 * Math.PI;
+
+
+    let correct_notes: HTMLElement = null;
+    let wrong_notes: HTMLElement = null;
+    let total_notes: HTMLElement = null;
+    let current_time: HTMLElement = null;
+    let last_time: HTMLElement = null;
+    let average_time: HTMLElement = null;
 
     export function init(){
         //
         // PIE
         //
 
-        // from: // http://bl.ocks.org/mbostock/5100636
         let svg = d3.select("#note-stat");
 
-        const arc : any = d3.svg.arc()
+        const arc  : any = d3.svg.arc() //FIXME !!
             .innerRadius(15)
             .outerRadius(40)
             .startAngle(0);
@@ -409,7 +438,7 @@ module Stats {
         const background = svg.append("path")
             .datum({ endAngle: tau })
             .style("fill", "#DA3E52")
-            .attr('opacity', 0.5)
+            .attr('opacity', 0.7)
             .attr("d", arc);
 
         // Add the foreground arc in orange, currently showing 12.7%.
@@ -436,7 +465,7 @@ module Stats {
         // BARS
         //
 
-        const data = [30, 29, 28, 25, 10, 0, 0, 0, 0, 0];
+        const data = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0].map(x => 50 -x);
         MAX = data.length;
 
         const tmp = d3.select("#time-stat");
@@ -454,77 +483,110 @@ module Stats {
         };
 
         // init
-        function init() {
-            for (let i = 0; i < data.length; ++i) {
-                rs.push(newBar(50 - data[i])
-                    .attr('opacity', 1)
-                    .attr("x", 10 + (i * 20))
-                    .attr("y", (50 + 10) - (50 - data[i]))
-                    .attr("height", 50 - data[i]));
-            }
-        };
+        for (let i = 0; i < data.length; ++i) {
+            rs.push(newBar(50 - data[i])
+                .attr('opacity', 1)
+                .attr("x", 10 + (i * 20))
+                .attr("y", (50 + 10) - (50 - data[i]))
+                .attr("height", 50 - data[i]));
+        }
 
 
-        line = layer2.append("line")          // attach a line
-            .style("stroke", "black")  // colour the line
+        const line = layer2.append("line")
+            .style("stroke", "black")
             .style("stroke-width", 1)
-            .attr("x1", 10 - 2)     // x position of the first end of the line
-            .attr("y1", 50 + 10)      // y position of the first end of the line
-            .attr("x2", 20 * (data.length) + 10 + 2)     // x position of the second end of the line
+            .attr("x1", 10 - 2)
+            .attr("y1", 50 + 10)
+            .attr("x2", 20 * (data.length) + 10 + 2)
             .attr("y2", 50 + 10);
 
-        const bar = layer2.append("line")          // attach a line
-            .style("stroke", "blue")  // colour the line
+        bar = layer2.append("line")
+            .style("stroke", "blue")
             .style("stroke-width", 1)
-            .attr("x1", 10 - 2)     // x position of the first end of the line
-            .attr("y1", 20)      // y position of the first end of the line
-            .attr("x2", 20 * (data.length) + 10 + 2)     // x position of the second end of the line
+            .attr("x1", 10 - 2)
+            .attr("y1", 20)
+            .attr("x2", 20 * (data.length) + 10 + 2)
             .attr("y2", 20); 
 
-        init();
+        correct_notes = document.getElementById('correct-notes');
+        wrong_notes = document.getElementById('wrong-notes');
+        total_notes = document.getElementById('total-notes');
+
+        current_time = document.getElementById('current-time');
+        last_time = document.getElementById('last-time');
+        average_time = document.getElementById('average-time');
     };
 
-    export function update(){
-        // pie update
-        const p = Math.random() * tau;
+    export function setNotes( correct : number, wrong : number) {
+        correct_notes.innerHTML = correct + '';
+        wrong_notes.innerHTML = wrong + '';
+        total_notes.innerHTML = (correct+wrong) + '';
+    };
+
+    /** perc between 0 and 1 */
+    export function updatePie( perc : number ){
         foreground.transition()
             .duration(1000)
             .ease('bounce')
-            .call(arcTween, p);
+            .call(arcTween, perc * tau);
+    };
 
-        // bar update
-        // push new value
-        function add(value : any) {
-            for (var i = 0; i < MAX; ++i) {
-                if (i === 0) {
-                    rs[i].transition()
-                    //.duration(1000)
-                        .attr("x", 10 + ((i - 1) * 20))
-                        .attr('opacity', 0)
-                        .remove();
-                } else {
-                    rs[i].transition()
-                    //.duration(200)
-                        .attr("x", 10 + ((i - 1) * 20));
-                }
+    export function setCurrent( time : number ){
+        current_time.innerHTML = (time/1000).toFixed(1) + '';
+    };
+
+    let count = 0;
+    let n_count = 0;
+    export function updateBar( ms : number ){
+        const s = ms / 1000;
+        const value = 50-Math.min(Math.floor(s*10),50);
+
+        count += s;
+        n_count += 1;
+
+        console.log(count);
+        console.log(n_count);
+        //
+        let avg = (count / n_count);
+        last_time.innerHTML = s.toFixed(1) + '';
+        average_time.innerHTML = avg.toFixed(1) + ''
+        // FIXME
+
+        avg = Math.min(Math.floor(avg * 10), 50);
+        bar.transition()
+            .attr('y1', (50 + 10) - avg)
+            .attr("y2", (50 + 10) - avg);
+
+        console.log(ms + ' ' + value);
+
+        for (var i = 0; i < MAX; ++i) {
+            if (i === 0) {
+                rs[i].transition()
+                //.duration(1000)
+                    .attr("x", 10 + ((i - 1) * 20))
+                    .attr('opacity', 0)
+                    .remove();
+            } else {
+                rs[i].transition()
+                //.duration(200)
+                    .attr("x", 10 + ((i - 1) * 20));
             }
+        }
 
-            rs = rs.splice(1, rs.length);
+        rs = rs.splice(1, rs.length);
 
-            var tmp = 50 - value;
-            var n = newBar(tmp)
-                .attr("x", 10 + ((rs.length + 1) * 20))
-                .attr("y", (50 + 10) - tmp)
-                .attr('opacity', 0)
-                .attr("height", tmp);
+        var tmp = 50 - value;
+        var n = newBar(tmp)
+            .attr("x", 10 + ((rs.length + 1) * 20))
+            .attr("y", (50 + 10) - tmp)
+            .attr('opacity', 0)
+            .attr("height", tmp);
 
-            n.transition()
-                .attr('opacity', 1)
-                .attr("x", 10 + ((rs.length) * 20));
+        n.transition()
+            .attr('opacity', 1)
+            .attr("x", 10 + ((rs.length) * 20));
 
-            rs.push(n);
-        };
-
+        rs.push(n);
     };
 
 };
@@ -612,7 +674,7 @@ window.onload = function(){
             state.generateSheet();
             Effects.curtain(
                 () => state.draw(),
-                () => Effects.moveCursor(state.currentX())
+                () => {state.resetStartTime(); Effects.moveCursor(state.currentX());}
                 );
         }else{
             const newX = state.currentX();
@@ -691,6 +753,8 @@ window.onload = function(){
         // initial draw
         state.draw();
         Effects.initCursor(H, state.currentX());
+
+        setInterval(() => Stats.setCurrent(new Date().getTime()-state.getStartTime()), 100);
     }
 
     window.onresize(null);

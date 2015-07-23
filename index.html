@@ -7,7 +7,7 @@
     margin: 0;
     padding: 0;
     overflow: hidden;
-    background-color: #d3d3d3;
+    background-color: #dddddd;
   }
 
   #d3-layer {
@@ -149,15 +149,18 @@
   font-family: sans-serif;
   }
 
+.left  {text-align:left;}
     .right  {text-align:right; font-weight: bold; padding-left: 5px;}
 
     .mydiv {
+      width: 50%;
       position: absolute;
-      bottom: 0;
+      bottom: 10px;
       display: inline-block;
-      margin-left: 5px;
-      margin-right: 5px;
-      border: solid black;
+      text-align: center;
+      /* margin-left: 5px;
+      margin-right: 5px; */
+      /*border: solid black;*/
     }
 
     th {
@@ -180,12 +183,10 @@
     <svg id='time-stat' xmlns="http://www.w3.org/2000/svg" version="1.1" width='220' height='70'></svg>
     <div class='blo'>
       <table style="width:100%">
-        <col align="left">
-        <col align="right">
-        <th>Time</th>
-        <tr><td>Current:</td><td class="right" id='current-time'> 123</td></tr>
-      <tr><td>Last:</td><td class="right" id='last-time'> 13</td></tr>
-      <tr><td>Average:</td><td class="right" id='average-time'> 23</td></tr>
+        <th class="left">Time</th>
+        <tr><td class="left">Current:</td><td class="right" id='current-time'>-</td></tr>
+      <tr><td class="left">Last:</td><td class="right" id='last-time'>-</td></tr>
+      <tr><td class="left">Average:</td><td class="right" id='average-time'>-</td></tr>
       </table>
     </div>
   </div>
@@ -196,10 +197,10 @@
       <table style="width:100%">
         <col align="left">
         <col align="right">
-        <th>Notes</th>
-        <tr><td>Correct:</td><td class="right" id='correct-notes'> 56</td></tr>
-      <tr><td>Wrong:</td><td class="right" id='wrong-notes'> 12</td></tr>
-      <tr><td>Total:</td><td class="right" id='total-notes'> 76</td></tr>
+        <th class="left">Notes</th>
+        <tr><td class="left">Correct:</td><td class="right" id='correct-notes'>-</td></tr>
+      <tr><td class="left">Wrong:</td><td class="right" id='wrong-notes'>-</td></tr>
+      <tr><td class="left">Total:</td><td class="right" id='total-notes'>-</td></tr>
       </table>
     </div>
   </div>
