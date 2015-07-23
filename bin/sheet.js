@@ -8,34 +8,41 @@
  */
 var Sheet;
 (function (Sheet) {
-    Sheet.WIDTH = 500, Sheet.HEIGHT = 500;
-    Sheet.NUM_BEATS = 8;
+    var TRANSPARENT_COLOR = 'rgba(0,0,0,0)';
     var BEAT_VALUE = 4;
+    var NUM_BEATS = 8;
+    var clean = null;
     var formatter = new Vex.Flow.Formatter();
     var isBassCode = function (code) { return code < 60; };
     var codesToNotes = function (v) { return v.map(function (x) { return Sheet.codeToNote(x); }); };
-    var TRANSPARENT_COLOR = 'rgba(0,0,0,0)';
     var ctx = null;
     var staveTreble = null;
     var staveBass = null;
     var brace = null;
-    function init() {
-        Sheet.WIDTH = window.innerWidth;
-        Sheet.HEIGHT = window.innerHeight;
+    var START = 50;
+    var TOP = 150;
+    var STAVE_PADDING = 80;
+    function calcBeats(width) {
+        var tmp = Math.floor((width - START * 4) / 40);
+        tmp = Math.min(tmp, 10);
+        return Math.max(tmp, 1);
+    }
+    Sheet.calcBeats = calcBeats;
+    ;
+    function init(width, height, beats) {
+        NUM_BEATS = beats;
         var canvas = document.getElementsByTagName('canvas')[0];
+        canvas.style.left = Math.floor((window.innerWidth - width) / 2) + 'px';
         var renderer = new Vex.Flow.Renderer(canvas, Vex.Flow.Renderer.Backends.CANVAS);
-        renderer.resize(Sheet.WIDTH, Sheet.HEIGHT);
+        renderer.resize(width, height);
         ctx = renderer.getContext();
-        var START = 50;
-        var TOP = 100;
-        var STAVE_PADDING = 80;
-        Sheet.NUM_BEATS = Math.floor((Sheet.WIDTH - START * 4) / 40);
-        Sheet.NUM_BEATS = Math.min(Sheet.NUM_BEATS, 10);
-        Sheet.NUM_BEATS = Math.max(Sheet.NUM_BEATS, 1);
-        staveTreble = new Vex.Flow.Stave(START, TOP, Sheet.WIDTH - START * 2);
+        clean = function () {
+            ctx.clearRect(0, 0, width, height);
+        };
+        staveTreble = new Vex.Flow.Stave(START, TOP, width - START * 2);
         staveTreble.addClef('treble');
         staveTreble.setContext(ctx);
-        staveBass = new Vex.Flow.Stave(START, TOP + STAVE_PADDING, Sheet.WIDTH - START * 2);
+        staveBass = new Vex.Flow.Stave(START, TOP + STAVE_PADDING, width - START * 2);
         staveBass.addClef('bass');
         staveBass.setContext(ctx);
         brace = new Vex.Flow.StaveConnector(staveTreble, staveBass);
@@ -55,8 +62,8 @@ var Sheet;
     Sheet.colorSingleNote = colorSingleNote;
     ;
     function buildNotes(assist, cs) {
-        if (cs.length !== Sheet.NUM_BEATS)
-            throw ('Invalid number of notes. Expecting ' + Sheet.NUM_BEATS + ' but got ' + cs.length + '.');
+        if (cs.length !== NUM_BEATS)
+            throw ('Invalid number of notes. Expecting ' + NUM_BEATS + ' but got ' + cs.length + '.');
         var ts = [];
         var bs = [];
         var notesT = [];
@@ -92,11 +99,11 @@ var Sheet;
     Sheet.buildNotes = buildNotes;
     ;
     function buildKeyStatus(pos, color, ns) {
-        if (pos < 0 || pos > Sheet.NUM_BEATS)
-            throw ('Invalid position ' + pos + ' (expecting 0 <= pos < ' + Sheet.NUM_BEATS + ').');
-        var notesTreble = new Array(Sheet.NUM_BEATS);
-        var notesBass = new Array(Sheet.NUM_BEATS);
-        for (var i = 0; i < Sheet.NUM_BEATS; ++i) {
+        if (pos < 0 || pos > NUM_BEATS)
+            throw ('Invalid position ' + pos + ' (expecting 0 <= pos < ' + NUM_BEATS + ').');
+        var notesTreble = new Array(NUM_BEATS);
+        var notesBass = new Array(NUM_BEATS);
+        for (var i = 0; i < NUM_BEATS; ++i) {
             if (i !== pos) {
                 notesTreble[i] = makeInvisibleNote();
                 notesBass[i] = makeInvisibleNote();
@@ -131,7 +138,7 @@ var Sheet;
     Sheet.buildKeyStatus = buildKeyStatus;
     ;
     function draw(treble, bass) {
-        ctx.clearRect(0, 0, Sheet.WIDTH, Sheet.HEIGHT);
+        clean();
         staveBass.draw();
         staveTreble.draw();
         brace.draw();
@@ -186,7 +193,7 @@ var Sheet;
     }
     ;
     function makeVoice() {
-        return new Vex.Flow.Voice({ num_beats: Sheet.NUM_BEATS, beat_value: BEAT_VALUE, resolution: Vex.Flow.RESOLUTION });
+        return new Vex.Flow.Voice({ num_beats: NUM_BEATS, beat_value: BEAT_VALUE, resolution: Vex.Flow.RESOLUTION });
     }
     ;
 })(Sheet || (Sheet = {}));
