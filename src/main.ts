@@ -99,8 +99,6 @@ module Game {
                 this.rightB = newArray(this.sheet.notesBass[this.i].length,false);
                 this.timer = new Date().getTime();
             };
-
-            this.generateSheet();
         }
 
         currentX(){
@@ -740,26 +738,27 @@ window.onload = function(){
     }
 
     const beats = 8; //TODO: dynamic beat number is messy: Sheet.calcBeats(window.innerWidth);
-    
     const H = 500; // this is really the maximum height needed for a MIDI sheet
     const W = 700; // reasonable enough for 8 beats
+
+    state = new Game.GameState(
+        // note help only draws correctly if there is only one note per beat
+        // thus, disabled for every other condition
+        help && minChord === 1 && maxChord === 1,
+        beats,
+        minChord, maxChord,
+        minMIDI, maxMIDI
+        );
 
     let oldTimer : number = null;
     window.onresize = function(e: UIEvent) {
         Sheet.init(W, H, beats);
         Effects.init(W, H, help);
         Stats.init();
-        
-        // FIXME move this out, but generate sheet requires Sheet.init !!
-        state = new Game.GameState(
-            // note help only draws correctly if there is only one note per beat
-            // thus, disabled for every other condition
-            help && minChord === 1 && maxChord === 1,
-            beats,
-            minChord, maxChord,
-            minMIDI, maxMIDI
-            );
 
+        //FIXME: only after Sheet.init():
+        state.generateSheet();
+        
         // initial (re)draw
         state.draw();
         Effects.initCursor(H, state.currentX());
