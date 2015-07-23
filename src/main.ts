@@ -274,10 +274,10 @@ module Effects {
     const BOX = 30;
 
     export function init(width: number, height: number, help : boolean) {
-        if (svg !== null)
-            throw 'resize svg code not ready';
+        if (svg === null){
+            svg = d3.select("#d3-layer");
+        }
 
-        svg = d3.select("#d3-layer");
         svg.attr("width", width);
         svg.attr("height", height);
         svg.style("left", Math.floor((window.innerWidth-width)/2) );
@@ -290,6 +290,11 @@ module Effects {
     };
 
     function addAssist( width : number ){
+        if( g !== null ){
+            // remove before adding new stuff.
+            g.remove(); //FIXME if resized then it will be well above curtain!!
+        }
+
         g = svg.append("g").attr("opacity", 1);
         const str = ['G', 'B', 'D', 'F', 'A', 'C', 'E'];
 
@@ -337,8 +342,10 @@ module Effects {
     };
 
     export function initCursor(height : number, x : number){
-        cursor = svg.append("rect")
-            .style("fill", "#a3a3a3")
+        if( cursor === null ){
+            cursor = svg.append("rect");    
+        }
+        cursor.style("fill", "#a3a3a3")
         // .style("stroke","black")
         //   .attr("stroke-width", 2)
             .attr("x", 0)
@@ -397,7 +404,6 @@ module Stats {
     let MAX: number = 0;
     let rs: d3.Selection<any>[] = [];
 
-
     let correct_notes: HTMLElement = null;
     let wrong_notes: HTMLElement = null;
     let total_notes: HTMLElement = null;
@@ -409,6 +415,9 @@ module Stats {
     let n_count = 0;
 
     export function init(){
+        if( bar !== null ){
+            return; // alreay initialized
+        }
         //
         // PIE
         //
@@ -535,7 +544,6 @@ module Stats {
         count += s;
         n_count += 1;
 
-        //
         let avg = (count / n_count);
         last_time.innerHTML = s.toFixed(1) + '';
         average_time.innerHTML = avg.toFixed(1) + '';
@@ -659,11 +667,11 @@ window.onload = function(){
     let state : Game.GameState = null;
 
     function onKey(down: boolean, code: MIDI.Note) {
-        console.log('Key: ' + code + ' ' + down + ' >> ' + MIDI.convertMIDIcodeToNote(code));
+        //console.log('Key: ' + code + ' ' + down + ' >> ' + MIDI.convertMIDIcodeToNote(code));
 
         const oldX = state.currentX();
         const newSheet = state.update(down, code);
-        state.draw()
+        state.draw();
 
         if( newSheet ){
             state.generateSheet();
@@ -731,13 +739,14 @@ window.onload = function(){
     }
 
     let oldTimer : number = null;
-    window.onresize = function(e : UIEvent) {
+    //FIXME: using resize like this is bad... separate UI resize from gamestate resize. we no longer use dynamic beats length
+    window.onresize = function(e: UIEvent) {
         const beats = 8; //TODO: dynamic beat number is messy: Sheet.calcBeats(window.innerWidth);
         
         const H = 500; // this is really the maximum height needed for a MIDI sheet
         const W = 700; // reasonable enough for 8 beats
         
-        Sheet.init(W, H,beats);
+        Sheet.init(W, H, beats);
         Effects.init(W, H, help);
         Stats.init();
 
@@ -745,7 +754,7 @@ window.onload = function(){
             // note help only draws correctly if there is only one note per beat
             // thus, disabled for every other condition
             help && minChord === 1 && maxChord === 1,
-            beats, 
+            beats,
             minChord, maxChord,
             minMIDI, maxMIDI
             );
@@ -759,7 +768,7 @@ window.onload = function(){
             clearInterval(oldTimer);
         }
         oldTimer = setInterval(() => Stats.setCurrentTime(new Date().getTime() - state.getStartTime()), 100);
-    }
+    };
 
     window.onresize(null);
 

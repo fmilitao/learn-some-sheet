@@ -52,6 +52,7 @@ module Sheet {
     const TOP = 150;
     const STAVE_PADDING = 80; //TODO: not quite right?
 
+    // this doesn't work well...
     export function calcBeats(width : number ){
         let tmp = Math.floor((width - START * 4) / 40);
         tmp = Math.min(tmp, 10); //TODO: one note is off screen if more than 10?
