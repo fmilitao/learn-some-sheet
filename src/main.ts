@@ -105,7 +105,7 @@ module Game {
             const note = this.sheet.treble.tickables[this.i].note_heads[0];
             // console.log(note);
             // console.log(note.x + ' ' + note.width);
-            return note.x - (note.width / 2); // FIXME: this yield wrong when restarting??
+            return note.x - (note.width / 2); // FIXME: this yields wrong position when restarting??
         }
 
         update(down: boolean, code : MIDI.Note) : boolean {
@@ -382,7 +382,6 @@ module Effects {
 
 };
 
-// FIXME: lots of missing types!
 module Stats {
     // pie code adapted from:  http://bl.ocks.org/mbostock/5100636
     const width = 100;
@@ -390,7 +389,7 @@ module Stats {
     const tau = 2 * Math.PI;
     // pie foreground
     let foreground: d3.Selection<any> = null;
-    let arcTween: any = null;
+    let arcTween: (transition: d3.Transition<any>, newAngle: number) => void = null;
 
     let bar: d3.Selection<any> = null;
     let newBar: (n:number) => d3.Selection<any> = null;
@@ -440,8 +439,10 @@ module Stats {
             .attr("d", arc);
 
         arcTween = function(transition: d3.Transition<any>, newAngle: number) {
-            // FIXME!
-            (<any>transition).attrTween("d", function(d: any) {
+            // FIXME: https://github.com/mbostock/d3/wiki/Transitions#attrTween
+            // TODO: 'any' result type used since I am getting a type error... was not suppose to return function?
+            // (the tutorial uses a function but the documention doesnt!?)
+            transition.attrTween("d", function(d: any, index: number, attr: string) : any {
                 const interpolate = d3.interpolate(d.endAngle, newAngle);
 
                 return function(t: number) {

@@ -805,6 +805,7 @@ declare module d3 {
     }
 
     interface Transition<Datum> {
+        // see: https://github.com/mbostock/d3/wiki/Transitions#transition
         transition(): Transition<Datum>; //FIXME added 'transition', do pull request?
 
         delay(): number;
@@ -2360,6 +2361,7 @@ declare module d3 {
         }
 
         interface Arc<T> {
+            // see: https://github.com/mbostock/d3/wiki/SVG-Shapes#_arc
             (d: T, i?: number): string; //FIXME i is optional
 
             innerRadius(): (d: T, i: number) => number;
