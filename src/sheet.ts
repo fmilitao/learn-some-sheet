@@ -1,3 +1,5 @@
+/// <reference path="../lib/vexflow.d.ts" />
+
 /*
  References:
 
@@ -7,9 +9,8 @@
  [4] https://groups.google.com/forum/#!topic/vexflow/kTZYDpzcskg
  */
 
-declare var Vex: any; // FIXME: hack until proper 'vexflow.d.ts' is available.
-declare type Voice = any;
-declare type StaveNote = any;
+declare type Voice = Vex.Flow.Voice;
+declare type StaveNote = Vex.Flow.StaveNote;
 
 module Sheet {
 
@@ -43,10 +44,10 @@ module Sheet {
     const isBassCode = (code: MIDI.Note) => code < 60;
     const codesToNotes = (v: MIDI.Note[]) => v.map((x: MIDI.Note) => Sheet.codeToNote(x));
 
-    let ctx: any = null;
-    let staveTreble: any = null;
-    let staveBass: any = null;
-    let brace: any = null;
+    let ctx: Vex.IRenderContext = null;
+    let staveTreble: Vex.Flow.Stave = null;
+    let staveBass: Vex.Flow.Stave = null;
+    let brace: Vex.Flow.StaveConnector = null;
 
     const START = 50;
     const TOP = 150;
@@ -90,12 +91,12 @@ module Sheet {
         brace.setContext(ctx);
     };
 
-    export function colorNote(staveNote: any, color: string){
-        staveNote.setStyle({ /* stemStyle: color,*/ strokeStyle: color, fillStyle: color });
+    export function colorNote(staveNote: StaveNote, color: string){
+        staveNote.setStyle({ strokeStyle: color, fillStyle: color });
     };
 
-    export function colorSingleNote(index: number, staveNote: any, color: string) {
-        staveNote.setKeyStyle(index, { /* stemStyle : color, */ strokeStyle: color, fillStyle: color });
+    export function colorSingleNote(index: number, staveNote: StaveNote, color: string) {
+        staveNote.setKeyStyle(index, { strokeStyle: color, fillStyle: color });
     };
 
     /**
@@ -108,9 +109,6 @@ module Sheet {
 
          const ts: MIDI.Note[][] = [];
          const bs: MIDI.Note[][] = [];
-
-         const notesT : any[] = [];
-         const notesB: any[] = [];
          
          const stavesT: StaveNote[] = [];
          const stavesB: StaveNote[] = [];
@@ -136,7 +134,7 @@ module Sheet {
          voiceTreble.addTickables(stavesT);
          voiceBass.addTickables(stavesB);
 
-         const max = Math.max(staveBass.width, staveTreble.width);
+         const max = Math.max(staveBass.getWidth(), staveTreble.getWidth());
          formatter.format([voiceTreble,voiceBass], max);
 
          return {
@@ -159,8 +157,8 @@ module Sheet {
         if (pos < 0 || pos > NUM_BEATS)
             throw ('Invalid position ' + pos + ' (expecting 0 <= pos < ' + NUM_BEATS+ ').');
 
-        const notesTreble: any[] = new Array(NUM_BEATS);
-        const notesBass: any[] = new Array(NUM_BEATS);
+        const notesTreble = new Array<StaveNote>(NUM_BEATS);
+        const notesBass = new Array<StaveNote>(NUM_BEATS);
 
         // add transparent notes for filling required number of notes. Formatter modifies 
         // each note, so we CANNOT reuse the same note multiple times.
@@ -202,7 +200,7 @@ module Sheet {
         voiceTreble.addTickables(notesTreble);
         voiceBass.addTickables(notesBass);
 
-        const max = Math.max(staveBass.width, staveTreble.width);
+        const max = Math.max(staveBass.getWidth(), staveTreble.getWidth());
         formatter.format([voiceTreble, voiceBass], max);
 
         return { treble: voiceTreble, bass: voiceBass };
@@ -242,7 +240,7 @@ module Sheet {
         return [letter, parseInt(o)];
     };
 
-    function makeInvisibleNote() {
+    function makeInvisibleNote(): Vex.Flow.StaveNote {
         const invisible = new Vex.Flow.StaveNote({ keys: ['e/4'], duration: 'q' });
         invisible.setStyle({ strokeStyle: TRANSPARENT_COLOR, fillStyle: TRANSPARENT_COLOR });
         return invisible;

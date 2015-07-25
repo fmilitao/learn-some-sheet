@@ -102,10 +102,8 @@ module Game {
         }
 
         currentX(){
-            const note = this.sheet.treble.tickables[this.i].note_heads[0];
-            // console.log(note);
-            // console.log(note.x + ' ' + note.width);
-            return note.x - (note.width / 2); // FIXME: this yields wrong position when restarting??
+            const box = this.sheet.treble.getTickables()[this.i].getBoundingBox();
+            return box.getX() - (box.getW() / 2);
         }
 
         update(down: boolean, code : MIDI.Note) : boolean {
