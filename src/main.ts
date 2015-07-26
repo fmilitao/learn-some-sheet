@@ -436,14 +436,11 @@ module Stats {
             .style("stroke-width", 4)
             .attr("d", arc);
 
-        arcTween = function(transition: d3.Transition<any>, newAngle: number) {
-            // FIXME: https://github.com/mbostock/d3/wiki/Transitions#attrTween
-            // TODO: 'any' result type used since I am getting a type error... was not suppose to return function?
-            // (the tutorial uses a function but the documention doesnt!?)
-            transition.attrTween("d", function(d: any, index: number, attr: string) : any {
+        arcTween = function(transition: d3.Transition<any>, newAngle: number) : void {
+            transition.attrTween("d", function(d: any, index: number, attr: string) {
                 const interpolate = d3.interpolate(d.endAngle, newAngle);
 
-                return function(t: number) {
+                return function(t: number) : d3.Primitive {
                     d.endAngle = interpolate(t);
                     return arc(d);
                 };

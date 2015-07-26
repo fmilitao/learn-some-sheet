@@ -824,7 +824,8 @@ declare module d3 {
         attr(name: string, value: (datum: Datum, index: number) => Primitive): Transition<Datum>;
         attr(obj: { [key: string]: Primitive | ((datum: Datum, index: number) => Primitive) }): Transition<Datum>;
 
-        attrTween(name: string, tween: (datum: Datum, index: number, attr: string) => Primitive): Transition<Datum>;
+        // FIXME https://github.com/mbostock/d3/wiki/Transitions#attrTween
+        attrTween(name: string, tween: (datum: Datum, index: number, attr: string) => (t:number) => Primitive): Transition<Datum>;
 
         style(name: string, value: Primitive, priority?: string): Transition<Datum>;
         style(name: string, value: (datum: Datum, index: number) => Primitive, priority?: string): Transition<Datum>;
